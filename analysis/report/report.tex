@@ -108,13 +108,14 @@
 \urlstyle{same}
 \hypersetup{
   pdftitle={Statistical Issues in Multicenter Randomized Clinical Trials},
-  pdfauthor={R.G. Thomas},
+  pdfauthor={Ronald G. Thomas, Ph.D.},
   hidelinks,
   pdfcreator={LaTeX via pandoc}}
 
 \title{Statistical Issues in Multicenter Randomized Clinical Trials}
-\author{R.G. Thomas}
-\date{April 19, 2026}
+\author{Ronald G. Thomas,
+Ph.D.\thanks{Wertheim School of Public Health, UCSD; ORCID: 0000-0003-1686-4965}}
+\date{May 11, 2026}
 
 \begin{document}
 \maketitle
@@ -391,6 +392,18 @@ and the \texttt{L'Ecuyer-CMRG} RNG for reproducibility.
 
 \section{Results}\label{results}
 
+\subsection{Headline findings}\label{headline-findings}
+
+Across 16 scenarios and \(R = 1{,}500\) replications per scenario, the
+random-site mixed model attained power between 0.54 and 0.97, with
+coverage of the 95\% confidence interval ranging from 0.895 to 0.957 and
+absolute bias never exceeding 0.011 (Morris Table 6 Monte Carlo SEs
+attached to every estimate in Table 1). The fixed-site estimator closely
+tracked the random-site estimator. Ignoring site entirely produced
+overcoverage (up to 0.984) and correspondingly lower power (as low as
+0.40) in scenarios with non-trivial between-site variance. The lowest
+convergence rate observed across any scenario or method was 1.000.
+
 \subsection{Summary of performance
 metrics}\label{summary-of-performance-metrics}
 
@@ -634,6 +647,14 @@ audit is at \texttt{docs/morris-audit-2026-04-17.md}.
 
 A remediation plan is documented in the audit file and will be executed
 in a subsequent revision.
+
+\vfill
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\emph{Rendered on 2026-05-11 at 18:42 PDT.}\\
+\emph{Source:
+\texttt{\textasciitilde{}/prj/res/07-multicenter-rct/multicenterrct/analysis/report/report.Rmd}}
 
 \protect\phantomsection\label{refs}
 \begin{CSLReferences}{0}{1}
