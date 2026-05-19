@@ -55,7 +55,7 @@ targets while broadening the population base for
 generalization of findings [@iche9; @localio2001adjustments].
 However, the multicenter structure introduces several
 analytic complexities that, if mishandled, can distort
-inference about treatment effects. This report addresses
+inference about treatment effects. We address
 four interrelated statistical issues that arise in the
 design and analysis of multicenter RCTs with continuous
 outcomes.
@@ -191,9 +191,9 @@ heterogeneity of group distributions across centers. When
 the ICC is positive, balanced allocation is optimal, but
 moderate imbalance imposes only a modest efficiency
 penalty. The key risk emerges when site size is
-informative -- that is, when larger sites systematically
+informative (that is, when larger sites systematically
 differ from smaller sites in patient characteristics or
-treatment delivery -- potentially introducing bias into
+treatment delivery), potentially introducing bias into
 the treatment effect estimate
 [@fedorov2005misleading; @agresti2000strategies].
 
@@ -201,7 +201,7 @@ the treatment effect estimate
 
 The existing literature provides clear theoretical guidance
 but limited integrated simulation evidence spanning all
-four issues simultaneously. This report presents a Monte
+four issues simultaneously. We present a Monte
 Carlo simulation that jointly varies the analytic method
 (ignore site, fixed site effects, random site effects),
 the presence or absence of treatment-by-site interaction,
