@@ -2,13 +2,23 @@ Package: multicenterrct
 Title: Statistical Issues in Multicenter Randomized Clinical Trials
 Version: 0.0.0.9000
 Authors@R:
-    person("Ronald G.", "Thomas", email = "rthomas@ucsd.edu", role = c("aut", "cre"))
+    person("Ronald G.", "Thomas", email = "rgthomas@ucsd.edu", role = c("aut", "cre"))
 Description: Methods for analyzing multicenter randomized clinical trials with site-level heterogeneity and variance components.
 License: GPL-3
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.2.0
-Imports:
-    renv
 Suggests:
+    broom.mixed,
+    dplyr,
+    gridExtra,
+    here,
+    kableExtra,
+    knitr,
+    lme4,
+    mvtnorm,
+    rmarkdown,
+    rprojroot,
+    tibble,
+    tidyverse,
     tinytest
