@@ -89,6 +89,12 @@
 \setlength{\emergencystretch}{3em} % prevent overfull lines
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{lineno}
+\linenumbers
+\usepackage{setspace}
+\setstretch{1.1}
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{array}
@@ -106,6 +112,10 @@
 \usepackage{bookmark}
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \urlstyle{same}
+% fallback for those not using the hyperref driver hyperxmp:
+\makeatletter
+\@ifundefined{xmpquote}{\newcommand{\xmpquote}[1]{#1}}{}
+\makeatother
 \hypersetup{
   pdftitle={Statistical Issues in Multicenter Randomized Clinical Trials},
   pdfauthor={Ronald G. Thomas, Ph.D.},
@@ -115,7 +125,7 @@
 \title{Statistical Issues in Multicenter Randomized Clinical Trials}
 \author{Ronald G. Thomas,
 Ph.D.\thanks{Wertheim School of Public Health, UCSD; ORCID: 0000-0003-1686-4965}}
-\date{May 11, 2026}
+\date{July 05, 2026}
 
 \begin{document}
 \maketitle
@@ -134,9 +144,9 @@ base for generalization of
 findings\textsuperscript{\citeproc{ref-iche9}{1},\citeproc{ref-localio2001adjustments}{2}}.
 However, the multicenter structure introduces several analytic
 complexities that, if mishandled, can distort inference about treatment
-effects. This report addresses four interrelated statistical issues that
-arise in the design and analysis of multicenter RCTs with continuous
-outcomes.
+effects. We address four interrelated statistical issues that arise in
+the design and analysis of multicenter RCTs with continuous outcomes,
+and we present simulation evidence bearing on each in turn.
 
 \subsection{Modeling site effects}\label{modeling-site-effects}
 
@@ -148,7 +158,7 @@ sites. Each strategy carries distinct assumptions and implications for
 the validity and efficiency of treatment effect
 estimation\textsuperscript{\citeproc{ref-senn1998controversies}{3},\citeproc{ref-jones1998comparison}{4}}.
 
-\textsuperscript{\citeproc{ref-localio2001adjustments}{2}} provided an
+\textsuperscript{\citeproc{ref-localio2001adjustments}{2}} broached an
 influential overview of the problem, identifying three analytic
 challenges inherent to multicenter data: within-center correlation of
 outcomes, confounding by center, and effect modification across centers.
@@ -260,8 +270,8 @@ efficiency loss depends on both the ICC and a statistic quantifying the
 heterogeneity of group distributions across centers. When the ICC is
 positive, balanced allocation is optimal, but moderate imbalance imposes
 only a modest efficiency penalty. The key risk emerges when site size is
-informative -- that is, when larger sites systematically differ from
-smaller sites in patient characteristics or treatment delivery --
+informative (that is, when larger sites systematically differ from
+smaller sites in patient characteristics or treatment delivery),
 potentially introducing bias into the treatment effect
 estimate\textsuperscript{\citeproc{ref-fedorov2005misleading}{12},\citeproc{ref-agresti2000strategies}{17}}.
 
@@ -269,11 +279,11 @@ estimate\textsuperscript{\citeproc{ref-fedorov2005misleading}{12},\citeproc{ref-
 
 The existing literature provides clear theoretical guidance but limited
 integrated simulation evidence spanning all four issues simultaneously.
-This report presents a Monte Carlo simulation that jointly varies the
-analytic method (ignore site, fixed site effects, random site effects),
-the presence or absence of treatment-by-site interaction, balanced
-versus imbalanced site sizes, and the magnitude of site-level variance.
-The simulation evaluates bias, empirical standard error, model-based
+We present a Monte Carlo simulation that jointly varies the analytic
+method (ignore site, fixed site effects, random site effects), the
+presence or absence of treatment-by-site interaction, balanced versus
+imbalanced site sizes, and the magnitude of site-level variance. The
+simulation evaluates bias, empirical standard error, model-based
 standard error, power, and coverage probability of 95\% confidence
 intervals for the average treatment effect across all factorial
 combinations of these design features.
@@ -394,15 +404,16 @@ and the \texttt{L'Ecuyer-CMRG} RNG for reproducibility.
 
 \subsection{Headline findings}\label{headline-findings}
 
-Across 16 scenarios and \(R = 1{,}500\) replications per scenario, the
-random-site mixed model attained power between 0.54 and 0.97, with
-coverage of the 95\% confidence interval ranging from 0.895 to 0.957 and
-absolute bias never exceeding 0.011 (Morris Table 6 Monte Carlo SEs
-attached to every estimate in Table 1). The fixed-site estimator closely
-tracked the random-site estimator. Ignoring site entirely produced
-overcoverage (up to 0.984) and correspondingly lower power (as low as
-0.40) in scenarios with non-trivial between-site variance. The lowest
-convergence rate observed across any scenario or method was 1.000.
+We observe that across 16 scenarios and \(R = 1{,}500\) replications per
+scenario, the random-site mixed model attained power between 0.54 and
+0.97, with coverage of the 95\% confidence interval ranging from 0.895
+to 0.957 and absolute bias never exceeding 0.011 (Morris Table 6 Monte
+Carlo SEs attached to every estimate in Table 1). The fixed-site
+estimator closely tracked the random-site estimator. Ignoring site
+entirely produced overcoverage (up to 0.984) and correspondingly lower
+power (as low as 0.40) in scenarios with non-trivial between-site
+variance. The lowest convergence rate observed across any scenario or
+method was 1.000.
 
 \subsection{Summary of performance
 metrics}\label{summary-of-performance-metrics}
@@ -504,21 +515,21 @@ power (right).}
 
 \section{Discussion}\label{discussion}
 
-The simulation results can be organized around the four research
+The simulation results may be organized around the four research
 questions motivating this study.
 
 \textbf{Modeling site effects.} Consistent
 with\textsuperscript{\citeproc{ref-chu2011comparing}{7}}
-and\textsuperscript{\citeproc{ref-kahanmorris2013continuous}{8}}, the
-random effects model attained nominal or near-nominal coverage and the
-highest power across nearly all scenarios. The fixed effects model
-performed comparably when the number of sites was small (\(K = 10\)) but
-lost efficiency with \(K = 30\) due to the large number of nuisance
-parameters. Ignoring site effects produced unbiased point estimates but
-inflated standard errors when site-level variance was present, leading
-to conservative inference and reduced power. These findings support the
-random effects model as a robust default for multicenter RCTs, as
-recommended
+and\textsuperscript{\citeproc{ref-kahanmorris2013continuous}{8}}, we
+find that the random effects model attained nominal or near- nominal
+coverage and the highest power across nearly all scenarios. The fixed
+effects model performed comparably when the number of sites was small
+(\(K = 10\)) but lost efficiency with \(K = 30\) due to the large number
+of nuisance parameters. Ignoring site effects produced unbiased point
+estimates but inflated standard errors when site-level variance was
+present, leading to conservative inference and reduced power. These
+findings support the random effects model as a robust default for
+multicenter RCTs, as recommended
 by\textsuperscript{\citeproc{ref-sennlewis2019treatment}{13}}
 and\textsuperscript{\citeproc{ref-iche9}{1}}.
 
@@ -545,9 +556,9 @@ generating
 mechanism.\textsuperscript{\citeproc{ref-jones1998comparison}{4}}
 and\textsuperscript{\citeproc{ref-fedorov2005misleading}{12}} have
 argued that some degree of treatment-by-center interaction is
-ubiquitous, and that the power to detect it is typically inadequate.
-Researchers should plan for its presence rather than test for its
-absence.
+ubiquitous, and that the power to detect it is typically inadequate. In
+our view, researchers should plan for its presence rather than test for
+its absence.
 
 \textbf{Imbalanced site sizes.} The comparison of balanced versus
 imbalanced site sizes reveals that for the random effects model,
@@ -566,10 +577,10 @@ informative site sizes, where larger sites systematically differ from
 smaller sites, all methods may produce biased estimates of the
 population-average treatment effect.
 
-\textbf{Limitations.} This simulation is restricted to continuous
-outcomes analyzed with normal-theory models. Binary and time-to-event
-outcomes raise additional complications, including separation in fixed
-effects logistic regression with many small
+\textbf{Limitations.} We should note that this simulation is restricted
+to continuous outcomes analyzed with normal- theory models. Binary and
+time-to-event outcomes raise additional complications, including
+separation in fixed effects logistic regression with many small
 sites\textsuperscript{\citeproc{ref-pickering2007analysis}{5},\citeproc{ref-agresti2000strategies}{17},\citeproc{ref-kahanAccountingCentreeffectsMulticentre2014}{19}}.
 The simulation does not incorporate dropout, non-compliance, or
 informative site sizes. The random effects model fitted here includes
@@ -624,10 +635,10 @@ Several directions warrant further investigation:
 \subsection{Morris et al.~(2019) ADEMP
 Compliance}\label{morris-et-al.-2019-ademp-compliance}
 
-This simulation study was audited against the reporting standards
+We audited this simulation study against the reporting standards
 proposed by Morris, White, and
 Crowther\textsuperscript{\citeproc{ref-morris2019using}{18}}. The full
-audit is at \texttt{docs/morris-audit-2026-04-17.md}.
+audit is recorded at \texttt{docs/morris-audit-2026-04-17.md}.
 
 \textbf{Verdict:} Partially compliant.
 
@@ -639,22 +650,22 @@ audit is at \texttt{docs/morris-audit-2026-04-17.md}.
   No Monte Carlo SE on any performance estimate in
   \texttt{summarize\_simulation()}.
 \item
-  \texttt{R\ =\ 1500} fixed without MCSE-based derivation.
+  \texttt{R\ =\ 1500} is fixed without a MCSE-based derivation.
 \item
   \texttt{filter(!is.na(est))} silently drops non-converged
   replications, breaking paired comparisons.
 \end{itemize}
 
-A remediation plan is documented in the audit file and will be executed
-in a subsequent revision.
+A remediation plan is recorded in the audit file and will be taken up in
+a subsequent revision.
 
 \vfill
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
-\emph{Rendered on 2026-05-11 at 18:42 PDT.}\\
+\emph{Rendered on 2026-07-05 at 13:44 PDT.}\\
 \emph{Source:
-\texttt{\textasciitilde{}/prj/res/07-multicenter-rct/multicenterrct/analysis/report/report.Rmd}}
+\texttt{/Users/zenn/Library/CloudStorage/Dropbox/prj/res/07-multicenter-rct/multicenterrct/analysis/report/report.Rmd}}
 
 \protect\phantomsection\label{refs}
 \begin{CSLReferences}{0}{1}

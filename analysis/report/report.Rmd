@@ -42,7 +42,7 @@ opts_chunk$set(
   results = "asis", dev = "pdf",
   cache.path = "cache/"
 )
-source("~/shr/zz.tools.R")
+# source(here::here("analysis/scripts/zz.tools.R"))
 options(scipen = 1, digits = 3)
 ```
 
