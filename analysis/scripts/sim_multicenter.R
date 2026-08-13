@@ -56,14 +56,19 @@ generate_trial_data <- function(
 fit_methods <- function(dat) {
   results <- list()
 
-  # Method 1: Ignore site (simple t-test / OLS)
+  # Method 1: Ignore site (simple t-test / OLS). `df` is the OLS
+  # residual df, used for both the p-value (via lm's own t-test) and,
+  # for consistency across all three methods below, the CI half-width.
   m1 <- lm(y ~ trt, data = dat)
   s1 <- summary(m1)$coefficients["trt", ]
   results$ignore <- tibble::tibble(
     method = "ignore_site",
     est = s1[1],
     se = s1[2],
-    pval = s1[4]
+    pval = s1[4],
+    df = stats::df.residual(m1),
+    singular = FALSE,
+    conv_warning = FALSE
   )
 
   # Method 2: Fixed site effects
@@ -75,18 +80,32 @@ fit_methods <- function(dat) {
       method = "fixed_site",
       est = s2[1],
       se = s2[2],
-      pval = s2[4]
+      pval = s2[4],
+      df = stats::df.residual(m2),
+      singular = FALSE,
+      conv_warning = FALSE
     )
   } else {
     results$fixed <- tibble::tibble(
       method = "fixed_site",
       est = NA_real_,
       se = NA_real_,
-      pval = NA_real_
+      pval = NA_real_,
+      df = NA_real_,
+      singular = NA,
+      conv_warning = NA
     )
   }
 
-  # Method 3: Random site effects (mixed model)
+  # Method 3: Random site effects (mixed model). A genuine convergence
+  # `error` is treated as non-convergence (est = NA). A `warning` (most
+  # commonly a boundary/singular fit when the true site variance is
+  # zero or small) does NOT imply an invalid estimate -- REML permits
+  # boundary solutions -- so the model is refit with the warning
+  # suppressed and the estimate is retained, but singularity and any
+  # other lme4 convergence diagnostic are recorded explicitly as
+  # first-class outcomes (`singular`, `conv_warning`) rather than
+  # silently absorbed into an undifferentiated "converged" bucket.
   m3 <- tryCatch(
     lmer(y ~ trt + (1 | site), data = dat, REML = TRUE),
     error = function(e) NULL,
@@ -98,20 +117,34 @@ fit_methods <- function(dat) {
   )
   if (!is.null(m3)) {
     s3 <- summary(m3)$coefficients["trt", ]
-    df_kr <- nrow(dat) - length(fixef(m3))
-    pval3 <- 2 * pt(-abs(s3[1] / s3[2]), df = df_kr)
+    # NOTE: `df_naive` is N minus the number of fixed-effect
+    # parameters. This is NOT a Kenward-Roger or Satterthwaite
+    # denominator df -- it is a naive approximation used as an interim
+    # reference distribution for both the p-value and the CI
+    # half-width (kept internally consistent, unlike the earlier
+    # implementation, which combined a t-based p-value with a z-based
+    # CI). See "Future research" in report.Rmd for the planned
+    # upgrade to lmerTest Satterthwaite/Kenward-Roger df.
+    df_naive <- nrow(dat) - length(fixef(m3))
+    pval3 <- 2 * pt(-abs(s3[1] / s3[2]), df = df_naive)
     results$random <- tibble::tibble(
       method = "random_site",
       est = s3[1],
       se = s3[2],
-      pval = pval3
+      pval = pval3,
+      df = df_naive,
+      singular = lme4::isSingular(m3),
+      conv_warning = length(m3@optinfo$conv$lme4$messages) > 0
     )
   } else {
     results$random <- tibble::tibble(
       method = "random_site",
       est = NA_real_,
       se = NA_real_,
-      pval = NA_real_
+      pval = NA_real_,
+      df = NA_real_,
+      singular = NA,
+      conv_warning = NA
     )
   }
 
@@ -164,12 +197,14 @@ run_simulation <- function(scenarios, n_sim = 1000) {
           tibble::tibble(
             method = c("ignore_site", "fixed_site",
                        "random_site"),
-            est = NA_real_, se = NA_real_, pval = NA_real_
+            est = NA_real_, se = NA_real_, pval = NA_real_,
+            df = NA_real_, singular = NA, conv_warning = NA
           )
         }
       )
       res$scenario <- sc$label
       res$rep <- r
+      res$true_trt <- sc$true_trt
       all_results[[idx]] <- res
     }
   }
@@ -179,13 +214,31 @@ run_simulation <- function(scenarios, n_sim = 1000) {
   out
 }
 
-summarize_simulation <- function(raw, true_trt) {
+summarize_simulation <- function(raw) {
+  # `true_trt` is read per scenario from `raw$true_trt` (attached by
+  # run_simulation() from the scenario table) rather than passed as a
+  # single scalar, because the scenario grid now includes a
+  # true_trt = 0 null arm (for Type I error) alongside the
+  # true_trt = 0.30 alternative arms; a single scalar `true_trt`
+  # argument could not correctly compute bias/coverage/power for both.
+  #
   # Morris et al. (2019) Table 6 Monte Carlo SEs for every metric.
   # `n_converged` is the number of reps returning a valid estimate —
   # Morris §5.1 treats non-convergence as a first-class outcome; we
   # therefore report convergence alongside the other measures rather
   # than silently dropping non-converged reps as in the previous
-  # implementation.
+  # implementation. Singular (boundary) fits and other lme4
+  # convergence-diagnostic warnings are likewise reported as
+  # first-class outcomes among the converged reps, rather than being
+  # silently folded into "converged."
+  #
+  # Coverage uses a t-based CI, `est +/- qt(0.975, df) * se`, with the
+  # same per-replicate `df` used for the p-value (OLS residual df for
+  # the ignore/fixed methods; the naive N-minus-fixed-effects df for
+  # the random-site method -- see fit_methods()). This replaces a
+  # fixed z = 1.96 half-width that was inconsistent with the t-based
+  # p-values used for power, and that did not vary with sample size or
+  # method.
   raw |>
     dplyr::group_by(scenario, method) |>
     dplyr::summarize(
@@ -195,6 +248,14 @@ summarize_simulation <- function(raw, true_trt) {
       mcse_convergence = sqrt(
         convergence_rate * (1 - convergence_rate) / n_total
       ),
+      n_singular = sum(singular, na.rm = TRUE),
+      singular_rate = n_singular / n_converged,
+      mcse_singular_rate = sqrt(
+        singular_rate * (1 - singular_rate) / n_converged
+      ),
+      conv_warning_rate = sum(conv_warning, na.rm = TRUE) /
+        n_converged,
+      true_trt = dplyr::first(true_trt),
       bias = mean(est, na.rm = TRUE) - true_trt,
       mcse_bias = stats::sd(est, na.rm = TRUE) / sqrt(n_converged),
       empirical_se = stats::sd(est, na.rm = TRUE),
@@ -210,8 +271,8 @@ summarize_simulation <- function(raw, true_trt) {
       power = mean(pval < 0.05, na.rm = TRUE),
       mcse_power = sqrt(power * (1 - power) / n_converged),
       coverage = mean(
-        (est - 1.96 * se <= true_trt) &
-        (est + 1.96 * se >= true_trt),
+        (est - stats::qt(0.975, df) * se <= true_trt) &
+        (est + stats::qt(0.975, df) * se >= true_trt),
         na.rm = TRUE
       ),
       mcse_coverage = sqrt(

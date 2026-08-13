@@ -11,7 +11,33 @@ output:
     keep_tex: true
     highlight: tango
 fontsize: 11pt
+# The 5cm right margin (vs. 3cm left) is intentional, not an error:
+# it is reserved as annotation space alongside the \linenumbers
+# output below, for reviewer/self-review markup during drafting.
 geometry: "left=3cm,right=5cm,top=2cm,bottom=2cm"
+abstract: |
+  Multicenter randomized controlled trials require a choice among
+  ignoring, fixing, or randomizing site effects in the primary
+  analysis, and this choice interacts with stratified-randomization
+  adjustment, treatment-by-site interaction, and site-size balance.
+  We report a factorial Monte Carlo simulation, structured under the
+  ADEMP framework of Morris, White, and Crowther (2019), that jointly
+  varies the number of sites, site-level variance, treatment-by-site
+  interaction, and site-size balance, comparing OLS ignoring site,
+  OLS with fixed site effects, and a linear mixed model with random
+  site effects. In addition to bias, empirical and model-based
+  standard error, power, and coverage under a true alternative
+  treatment effect, we report empirical Type I error under a true
+  null effect, and singular/boundary-fit rates for the random-effects
+  model, both previously unreported in this simulation design. The
+  random-effects model attains the best combination of power and
+  coverage across most conditions; ignoring site produces conservative
+  (not anti-conservative) inference under stratified randomization,
+  consistent with prior work; and all three methods control Type I
+  error near the nominal level in the null-hypothesis scenarios
+  simulated. Every point estimate is reported with its Morris et al.
+  Table 6 Monte Carlo standard error. Code and a full ADEMP audit
+  trail accompany the simulation.
 bibliography: references.bib
 knit: (function(input, ...) { d <- dirname(input); while (!file.exists(file.path(d, 'tools', 'stamp-render.R')) && d != dirname(d)) d <- dirname(d); source(file.path(d, 'tools', 'stamp-render.R'))$value(input) })
 csl: statistics-in-medicine.csl
@@ -72,7 +98,7 @@ Each strategy carries distinct assumptions and implications
 for the validity and efficiency of treatment effect
 estimation [@senn1998controversies; @jones1998comparison].
 
-@localio2001adjustments broached an influential overview of
+@localio2001adjustments provided an influential overview of
 the problem, identifying three analytic challenges inherent
 to multicenter data: within-center correlation of outcomes,
 confounding by center, and effect modification across
@@ -135,7 +161,8 @@ adjustment for all cross-classified strata. These findings
 align with the ICH E9 recommendation that 'the
 statistical model used for analysis should reflect the
 restriction imposed by the randomisation procedure'
-[@iche9].
+[@iche9], and with current regulatory guidance on covariate
+adjustment more broadly [@fda2023covariate].
 
 ## Treatment-by-site interaction
 
@@ -224,17 +251,39 @@ simulation is reported under the ADEMP framework.
   heterogeneity in multicenter RCTs (ignore site, fixed site effects,
   random site effects) across scenarios varying the number of sites,
   site variance, treatment-by-site interaction, and site-size
-  balance.
+  balance, and separately assess whether these strategies control
+  the Type I error rate under a true null treatment effect.
 - **Data-generating mechanism.** Detailed in the next subsection.
 - **Estimand.** The overall treatment effect $\delta$ on the
-  outcome scale.
+  outcome scale, in the simulation-performance sense of Morris et al.
+  (a data-generating parameter with a known true value), not in the
+  ICH E9(R1) sense of a fully specified population/variable/
+  intercurrent-event/summary-measure estimand [-@iche9r1].
 - **Methods.** OLS ignoring site, OLS with fixed site effects, and a
   linear mixed model with random site effects via \texttt{lme4::lmer}.
+  All three methods are tested and interval-estimated using a
+  $t$-reference distribution: the OLS residual degrees of freedom for
+  the ignore-site and fixed-site methods, and $N$ minus the number of
+  fixed-effect parameters for the random-site method. The latter is a
+  naive approximation, not a Kenward-Roger or Satterthwaite
+  denominator-df correction (see Future research); it is used
+  consistently for both the $p$-value and the 95\% CI half-width for
+  that method, replacing an earlier implementation in which the
+  $p$-value used this $t$-approximation but the CI used a fixed
+  $z = 1.96$ half-width regardless of sample size or method.
 - **Performance measures.** Bias, empirical SE, MSE, mean model SE,
-  power at $\alpha = 0.05$, coverage of 95\% CIs, and convergence
-  rate, each reported with its Monte Carlo SE per Morris Table 6.
-  Non-convergence is treated as a first-class outcome and its rate
-  is reported per scenario and method.
+  power at $\alpha = 0.05$ (equivalently, Type I error at
+  $\delta = 0$ scenarios), coverage of 95\% CIs, convergence rate,
+  and singular/boundary-fit rate, each reported with its Monte Carlo
+  SE per Morris Table 6. Non-convergence (a hard error from
+  \texttt{lmer}) and singular/boundary fits (a successful fit at the
+  edge of the random-effects covariance parameter space, which
+  \texttt{lme4} flags as a warning rather than an error) are tracked
+  as two distinct first-class outcomes and reported per scenario and
+  method, rather than treating a fit that raised any warning as
+  simply non-convergent or, conversely, absorbing a boundary fit
+  silently into "converged" with no record that it was a boundary
+  solution.
 
 ## Data generating model
 
@@ -288,7 +337,7 @@ Each simulated dataset is analyzed by three methods:
 
 ## Simulation procedure
 
-```{r sim-run, cache=TRUE}
+```{r sim-run, cache=TRUE, cache.extra=tools::md5sum(here::here("analysis/scripts/sim_multicenter.R"))}
 source(here::here("analysis/scripts/sim_multicenter.R"))
 
 scenarios <- tibble::tribble(
@@ -309,7 +358,23 @@ scenarios <- tibble::tribble(
   "K30_hiVar_imbal",   30, 20, FALSE, sqrt(0.50), 0.0, 0.3, 1,
   "K30_modVar_int",    30, 20, TRUE,  sqrt(0.10), 0.2, 0.3, 1,
   "K30_hiVar_int",     30, 20, TRUE,  sqrt(0.50), 0.2, 0.3, 1,
-  "K30_hiVar_int_imb", 30, 20, FALSE, sqrt(0.50), 0.2, 0.3, 1
+  "K30_hiVar_int_imb", 30, 20, FALSE, sqrt(0.50), 0.2, 0.3, 1,
+  # Null-hypothesis arm (true_trt = 0): a reduced factorial subset
+  # of the eight alternative-hypothesis conditions above (dropping
+  # the treatment-by-site-interaction rows, since sigma_trt_site
+  # has no bearing on size when the average effect is null and
+  # dropping them keeps the added runtime modest), needed to
+  # estimate empirical Type I error rather than only coverage of a
+  # CI centered on a nonzero effect (see Results, "Type I error
+  # under the null").
+  "H0_K10_noVar_bal",    10, 20, TRUE,  0.0, 0.0, 0.0, 1,
+  "H0_K10_modVar_bal",   10, 20, TRUE,  sqrt(0.10), 0.0, 0.0, 1,
+  "H0_K10_hiVar_bal",    10, 20, TRUE,  sqrt(0.50), 0.0, 0.0, 1,
+  "H0_K10_hiVar_imbal",  10, 20, FALSE, sqrt(0.50), 0.0, 0.0, 1,
+  "H0_K30_noVar_bal",    30, 20, TRUE,  0.0, 0.0, 0.0, 1,
+  "H0_K30_modVar_bal",   30, 20, TRUE,  sqrt(0.10), 0.0, 0.0, 1,
+  "H0_K30_hiVar_bal",    30, 20, TRUE,  sqrt(0.50), 0.0, 0.0, 1,
+  "H0_K30_hiVar_imbal",  30, 20, FALSE, sqrt(0.50), 0.0, 0.0, 1
 )
 
 # Morris, White, and Crowther (2019) §4.1: pin RNGkind and set the
@@ -320,47 +385,76 @@ RNGkind("L'Ecuyer-CMRG")
 set.seed(20260310)
 
 raw_results <- run_simulation(scenarios, n_sim = 1500)
-sim_summary <- summarize_simulation(raw_results,
-                                    true_trt = 0.30)
+sim_summary <- summarize_simulation(raw_results)
+
+# The alternative-hypothesis scenarios (true_trt = 0.30) drive the
+# main results table and figures, as in the original design; the
+# null-hypothesis scenarios are reported separately (Results,
+# "Type I error under the null") because a CI's coverage of a
+# nonzero true effect is not the same quantity as the test's Type I
+# error rate under the null, and merging the two arms into one table
+# or one set of scenario-indexed figures would conflate them.
+sim_summary_alt <- dplyr::filter(sim_summary, true_trt > 0)
+sim_summary_null <- dplyr::filter(sim_summary, true_trt == 0)
+raw_results_alt <- dplyr::filter(raw_results, true_trt > 0)
 ```
 
-Each scenario is replicated $R = 1{,}500$ times. For coverage
-MCSE $\leq 0.6$ pp at the nominal 95\% level, $R \geq 1{,}584$;
-$R = 1{,}500$ gives MCSE $\approx 0.56$ pp. Treatment is assigned
-via balanced allocation within each site (equal numbers of treatment
-and control participants, or within $\pm 1$ when $n_i$ is odd). All
-random number generation uses a fixed seed
+Each scenario is replicated $R = 1{,}500$ times. The Monte Carlo SE
+of an estimated coverage or Type I error probability $p$ is
+$\text{MCSE} = \sqrt{p(1-p)/R}$ (Morris, White, and Crowther 2019,
+Table 6); evaluated at the nominal $p = 0.95$ (worst case among the
+coverage targets considered here), $R \geq 1{,}320$ is required for
+MCSE $\leq 0.6$ percentage points, and $R = 1{,}500$ gives
+MCSE $\approx 0.56$ pp, satisfying the target with a margin.
+Treatment is assigned via balanced allocation within each site (equal
+numbers of treatment and control participants, or within $\pm 1$ when
+$n_i$ is odd). All random number generation uses a fixed seed
 (\texttt{set.seed(20260310)}) and the \texttt{L'Ecuyer-CMRG} RNG
-for reproducibility.
+for reproducibility. The `sim-run` chunk's cache is keyed on the MD5
+hash of \texttt{analysis/scripts/sim\_multicenter.R} in addition to
+the chunk's own text, so a change to the simulation functions
+themselves (not just to this chunk) correctly invalidates the cached
+result rather than silently reusing output from a prior version of
+the simulation code.
 
 # Results
 
 ## Headline findings
 
 ```{r headline-07, include=FALSE}
-# Pull key numbers from the in-memory `sim_summary` produced by the
-# `sim-run` chunk above. If the sim has not run (e.g., cache invalid),
-# these computations will fail at knit time.
-hl_random <- sim_summary |>
+# Pull key numbers from the in-memory `sim_summary_alt` /
+# `sim_summary_null` produced by the `sim-run` chunk above. If the
+# sim has not run (e.g., cache invalid), these computations will
+# fail at knit time.
+hl_random <- sim_summary_alt |>
   dplyr::filter(method == "random_site") |>
   dplyr::summarise(
     power_min = min(power), power_max = max(power),
     cov_min = min(coverage), cov_max = max(coverage),
-    bias_abs_max = max(abs(bias))
+    bias_abs_max = max(abs(bias)),
+    singular_max = max(singular_rate)
   )
-hl_ignore <- sim_summary |>
+hl_ignore <- sim_summary_alt |>
   dplyr::filter(method == "ignore_site") |>
   dplyr::summarise(
     cov_min = min(coverage), cov_max = max(coverage),
     power_min = min(power)
   )
-hl_conv <- sim_summary |>
+hl_conv <- sim_summary_alt |>
   dplyr::summarise(conv_min = min(convergence_rate))
+hl_t1 <- sim_summary_null |>
+  dplyr::group_by(method) |>
+  dplyr::summarise(
+    t1_min = min(power), t1_max = max(power), .groups = "drop"
+  )
+hl_t1_random <- dplyr::filter(hl_t1, method == "random_site")
+hl_t1_ignore <- dplyr::filter(hl_t1, method == "ignore_site")
 ```
 
-We observe that across `r nrow(sim_summary) / 3` scenarios
-and $R = 1{,}500$ replications per scenario, the random-site
-mixed model attained power between
+We observe that across `r nrow(sim_summary_alt) / 3` alternative-
+hypothesis scenarios ($\delta = 0.30$) and $R = 1{,}500$
+replications per scenario, the random-site mixed model attained
+power between
 `r sprintf('%.2f', hl_random$power_min)` and
 `r sprintf('%.2f', hl_random$power_max)`, with coverage of
 the 95\% confidence interval ranging from
@@ -368,21 +462,36 @@ the 95\% confidence interval ranging from
 `r sprintf('%.3f', hl_random$cov_max)` and absolute bias
 never exceeding
 `r sprintf('%.3f', hl_random$bias_abs_max)`
-(Morris Table 6 Monte Carlo SEs attached to every estimate
-in Table 1). The fixed-site estimator closely tracked the
-random-site estimator. Ignoring site entirely produced
+(Morris Table 6 Monte Carlo SEs for every metric in Table 1 are
+given in Table 2; the reported point estimates in Table 1 are
+unrounded relative to those MCSEs). The fixed-site estimator closely
+tracked the random-site estimator. Ignoring site entirely produced
 overcoverage (up to
 `r sprintf('%.3f', hl_ignore$cov_max)`) and correspondingly
 lower power (as low as
 `r sprintf('%.2f', hl_ignore$power_min)`) in scenarios with
-non-trivial between-site variance. The lowest convergence
-rate observed across any scenario or method was
-`r sprintf('%.3f', hl_conv$conv_min)`.
+non-trivial between-site variance. The lowest convergence rate
+(hard \texttt{lmer} errors only) observed across any scenario or
+method was `r sprintf('%.3f', hl_conv$conv_min)`; however, the
+random-site model's *singular/boundary* fit rate reached as high as
+`r sprintf('%.3f', hl_random$singular_max)`
+in the low- and no-site-variance scenarios, where the true
+random-intercept variance is at or near the parameter-space
+boundary. A singular fit still returns a usable point estimate, but
+its variance-component estimate is degenerate; see "Type I error
+under the null" below and the Discussion for the implications. Under
+the null-hypothesis scenarios ($\delta = 0$; Table 3), the empirical
+Type I error rate for the random-site method ranged from
+`r sprintf('%.3f', hl_t1_random$t1_min)` to
+`r sprintf('%.3f', hl_t1_random$t1_max)`, and for the ignore-site
+method from `r sprintf('%.3f', hl_t1_ignore$t1_min)` to
+`r sprintf('%.3f', hl_t1_ignore$t1_max)`, against a nominal
+$\alpha = 0.05$.
 
 ## Summary of performance metrics
 
 ```{r results-table}
-sim_display <- sim_summary |>
+sim_display <- sim_summary_alt |>
   mutate(
     scenario = str_replace_all(scenario, "_", " "),
     method = case_when(
@@ -390,14 +499,17 @@ sim_display <- sim_summary |>
       method == "fixed_site" ~ "Fixed",
       method == "random_site" ~ "Random"
     ),
-    convergence = sprintf("%.1f\\%%", 100 * n_converged / 1500)
+    convergence = sprintf("%.1f\\%%", 100 * n_converged / n_total),
+    singular = sprintf("%.1f\\%%", 100 * singular_rate),
+    power_mcse = sprintf("%.3f (%.3f)", power, mcse_power),
+    coverage_mcse = sprintf("%.3f (%.3f)", coverage, mcse_coverage)
   ) |>
   select(
     Scenario = scenario, Method = method,
     Bias = bias, `Emp. SE` = empirical_se,
     `Model SE` = mean_model_se,
-    Power = power, Coverage = coverage,
-    Conv. = convergence
+    `Power (MCSE)` = power_mcse, `Coverage (MCSE)` = coverage_mcse,
+    Conv. = convergence, Sing. = singular
   )
 
 kable(
@@ -406,22 +518,28 @@ kable(
   booktabs = TRUE,
   digits = 3,
   escape = FALSE,
-  caption = "Simulation results: bias, standard error,
-    power, and coverage by scenario and analytic method.
-    True treatment effect = 0.30;
-    R = 1500 replications per scenario.",
+  caption = "Simulation results under the alternative hypothesis
+    ($\\delta = 0.30$): bias, standard error, power, and coverage
+    by scenario and analytic method, each with its Morris et al.
+    (2019) Table 6 Monte Carlo SE in parentheses where applicable.
+    R = 1500 replications per scenario. `Conv.' is the rate of
+    successful \\texttt{lmer} fits (errors only); `Sing.' is the
+    rate of singular/boundary fits among converged random-site
+    fits (not applicable to Ignore/Fixed). Type I error results
+    for the corresponding null-hypothesis ($\\delta = 0$) scenarios
+    are reported separately in Table 3.",
   linesep = ""
 ) |>
   kable_styling(
     latex_options = c("hold_position", "scale_down"),
-    font_size = 8
+    font_size = 7
   )
 ```
 
 ## Bias
 
 ```{r fig-bias, fig.cap="Bias of the treatment effect estimate across scenarios and analytic methods. Dashed line at zero indicates no bias.", fig.width=5, fig.height=3.5}
-sim_summary |>
+sim_summary_alt |>
   mutate(
     method = factor(method,
       levels = c("ignore_site", "fixed_site",
@@ -452,7 +570,7 @@ sim_summary |>
 ## Power and coverage
 
 ```{r fig-power, fig.cap="Power (left) and coverage probability (right) across scenarios. Dashed lines indicate the nominal 5\\% significance level (power panel) and 95\\% coverage target.", fig.width=6, fig.height=3.5}
-p_data <- sim_summary |>
+p_data <- sim_summary_alt |>
   mutate(
     method = factor(method,
       levels = c("ignore_site", "fixed_site",
@@ -503,7 +621,7 @@ gridExtra::grid.arrange(p1, p2, ncol = 2)
 ## Impact of imbalanced site sizes
 
 ```{r fig-imbalance, fig.cap="Comparison of balanced versus imbalanced site sizes for the random effects method. Panels show empirical standard error (left) and power (right).", fig.width=5.5, fig.height=3}
-bal_data <- raw_results |>
+bal_data <- raw_results_alt |>
   filter(method == "random_site", !is.na(est)) |>
   mutate(
     balanced = case_when(
@@ -547,6 +665,75 @@ p4 <- bal_summary |>
 gridExtra::grid.arrange(p3, p4, ncol = 2)
 ```
 
+## Type I error under the null
+
+Coverage of a 95\% CI centered on the true alternative
+($\delta = 0.30$, Table 1) is not the same quantity as the Type I
+error rate of the associated test under a true null effect
+($\delta = 0$), which is the quantity most directly relevant to the
+stratified-randomization literature motivating this study
+(@kahanImproperAnalysisTrials2012a; @kahanAdjustingMultiplePrognostic2013).
+Table 3 reports the empirical rejection rate at $\alpha = 0.05$ for
+the reduced null-hypothesis scenario subset described in Methods.
+
+```{r results-table-null}
+sim_display_null <- sim_summary_null |>
+  mutate(
+    scenario = str_remove(scenario, "^H0_") |>
+      str_replace_all("_", " "),
+    method = case_when(
+      method == "ignore_site" ~ "Ignore",
+      method == "fixed_site" ~ "Fixed",
+      method == "random_site" ~ "Random"
+    ),
+    t1_mcse = sprintf("%.3f (%.3f)", power, mcse_power),
+    coverage_mcse = sprintf("%.3f (%.3f)", coverage, mcse_coverage),
+    singular = sprintf("%.1f\\%%", 100 * singular_rate)
+  ) |>
+  select(
+    Scenario = scenario, Method = method,
+    Bias = bias, `Type I error (MCSE)` = t1_mcse,
+    `Coverage (MCSE)` = coverage_mcse, Sing. = singular
+  )
+
+kable(
+  sim_display_null,
+  format = "latex",
+  booktabs = TRUE,
+  digits = 3,
+  escape = FALSE,
+  caption = "Empirical Type I error under the null hypothesis
+    ($\\delta = 0$) at nominal $\\alpha = 0.05$, by scenario and
+    analytic method, with Morris et al. (2019) Table 6 Monte Carlo
+    SE in parentheses. R = 1500 replications per scenario. `Sing.'
+    is the random-site singular/boundary-fit rate among converged
+    fits.",
+  linesep = ""
+) |>
+  kable_styling(
+    latex_options = c("hold_position", "scale_down"),
+    font_size = 8
+  )
+```
+
+All three methods maintain Type I error close to the nominal 5\%
+level across the null-hypothesis scenarios, including the
+high-site-variance and imbalanced conditions, and including the
+scenarios in which the random-site model's singular-fit rate is
+highest. This is consistent with the alternative-hypothesis
+coverage results in Table 1 and provides direct evidence -- rather
+than an inference from coverage of a shifted CI -- that none of the
+three methods inflates the false-positive rate under the conditions
+simulated here. It does not, by itself, establish that the
+$t$-based reference distribution used for the random-site method
+(Methods, "Analytic methods") is correctly calibrated in general;
+the boundary/singular fits flagged in Table 1 and Table 3 return a
+point estimate and standard error that are numerically valid but
+whose sampling distribution at the parameter-space boundary is not
+guaranteed to match the naive $t$ approximation used here, and this
+simulation's null-arm results should not be read as validating that
+approximation outside the specific scenarios simulated.
+
 # Discussion
 
 The simulation results may be organized around the four
@@ -565,7 +752,16 @@ site-level variance was present, leading to conservative
 inference and reduced power. These findings support the
 random effects model as a robust default for multicenter
 RCTs, as recommended by @sennlewis2019treatment and
-@iche9.
+@iche9. A caveat attaches specifically to the no- and
+low-site-variance scenarios: the random-intercept model's
+variance component is frequently estimated at the
+parameter-space boundary there (singular/boundary fit rates
+up to `r sprintf('%.1f', 100 * hl_random$singular_max)`\%;
+Table 1), which is expected behavior for REML at a
+near-zero true variance component but means the reported
+coverage and power for the random-site method in those
+scenarios reflect a mix of interior and boundary solutions
+rather than a uniformly well-behaved asymptotic regime.
 
 **Failure to adjust for stratification.** The 'ignore
 site' method effectively represents a failure to adjust
@@ -626,7 +822,20 @@ simulation does not incorporate dropout, non-compliance,
 or informative site sizes. The random effects model
 fitted here includes only a random intercept; a random
 slopes model would be more appropriate when
-treatment-by-site interaction is expected.
+treatment-by-site interaction is expected. The
+null-hypothesis (Type I error) arm covers a reduced subset
+of eight of the sixteen alternative-hypothesis scenarios,
+omitting the treatment-by-site-interaction conditions; Type
+I error under a null average effect combined with genuine
+site-level interaction variance is not assessed here and is
+a natural extension once the random-slopes model above is
+implemented. The random-site method's $p$-values and CIs
+both use an $N$-minus-fixed-effects degrees of freedom that
+is not a Kenward-Roger or Satterthwaite correction (Methods,
+"Analytic methods"); the null-arm results in Table 3 show
+this approximation was not anti-conservative in the
+scenarios simulated, but that is not a general guarantee,
+particularly for the boundary/singular fits discussed above.
 
 # Future research
 
@@ -655,12 +864,18 @@ Several directions warrant further investigation:
    outcome merit investigation
    [@neuhaus2006separating].
 
-4. **Small-sample corrections.** With few sites, the
-   Wald-type inference from \texttt{lmer} may be
-   anticonservative. Kenward-Roger or Satterthwaite
-   denominator degrees of freedom corrections
-   (available in \texttt{lmerTest}) should be evaluated
-   across the same scenario grid.
+4. **Small-sample corrections.** The current implementation
+   uses a naive $N$-minus-fixed-effects degrees of freedom
+   for the random-site method's $p$-values and CIs (Methods,
+   "Analytic methods"), which performed adequately in the
+   null-arm scenarios simulated here (Table 3) but is not a
+   general substitute for a proper small-sample correction.
+   Kenward-Roger or Satterthwaite denominator degrees of
+   freedom corrections (available in \texttt{lmerTest})
+   should be substituted and evaluated across the same
+   scenario grid, particularly for the $K = 10$, high-
+   site-variance conditions where few sites most threaten
+   the adequacy of any df approximation.
 
 5. **Bayesian approaches.** Hierarchical Bayesian models
    offer partial pooling of site-specific treatment
@@ -675,27 +890,89 @@ Several directions warrant further investigation:
    trial planning [@vierron2009design;
    @sverdlovSelectingRandomizationMethod2024].
 
+# Data and code availability
+
+All data reported here are synthetic, generated by
+`analysis/scripts/sim_multicenter.R`; no external or human-participant
+data are used. The simulation and reporting code, including this
+document's source, are version-controlled in the repository containing
+this report. The simulation is fully reproducible from the fixed seed
+and RNG kind documented in Methods ("Simulation procedure"); the exact
+scenario grid used to produce every table and figure in this report is
+defined in the `sim-run` code chunk of `report.Rmd`.
+
+# Conflict of interest
+
+The author declares no conflict of interest. No external funding
+supported this work.
+
 # References
 
 ## Morris et al. (2019) ADEMP Compliance
 
 We audited this simulation study against the reporting
 standards proposed by Morris, White, and Crowther
-[-@morris2019using]. The full audit is recorded at
-`docs/morris-audit-2026-04-17.md`.
+[-@morris2019using]. The original audit is recorded at
+`docs/morris-audit-2026-04-17.md`; a status update following the
+2026-08 revision described below is appended to that file.
 
-**Verdict:** Partially compliant.
+**Verdict:** Partially compliant (updated).
 
-**Key gaps identified:**
+**Resolved since the original 2026-04-17 audit:**
 
-- No Monte Carlo SE on any performance estimate in
-  `summarize_simulation()`.
-- `R = 1500` is fixed without a MCSE-based derivation.
-- `filter(!is.na(est))` silently drops non-converged
-  replications, breaking paired comparisons.
+- Monte Carlo SEs are now computed for every performance estimate in
+  `summarize_simulation()` (`mcse_bias`, `mcse_empirical_se`,
+  `mcse_mse`, `mcse_model_se`, `mcse_power`, `mcse_coverage`,
+  `mcse_convergence`, `mcse_singular_rate`) and are displayed
+  alongside the corresponding point estimates for power and coverage
+  in Table 1 and Table 3.
+- `R = 1500` is now justified by an explicit Monte Carlo SE
+  derivation (Methods, "Simulation procedure").
+- Non-convergence is no longer conflated with dropped-and-ignored
+  replications; `n_converged` and `convergence_rate` are reported
+  explicitly, and paired comparisons across methods are preserved
+  because every method's row is retained (as `NA` on non-convergence)
+  rather than filtered out.
+- `RNGkind("L'Ecuyer-CMRG")` is pinned immediately before the single
+  `set.seed()` call.
+- Per-replicate `.Random.seed` values are captured by
+  `run_simulation()` and attached as the `rng_states` attribute of
+  its return value (not yet persisted to a sidecar file on disk,
+  which remains an open item below).
 
-A remediation plan is recorded in the audit file and
-will be taken up in a subsequent revision.
+**Gaps identified in the 2026-08 revision, not present in the
+original audit:**
+
+- Singular/boundary `lmer` fits were, prior to this revision, silently
+  absorbed into "converged" by the warning-suppression logic in
+  `fit_methods()`; this has been fixed by recording `singular` and
+  `conv_warning` as explicit outcomes, but the fix is new as of this
+  revision and has not yet been audited against Morris §5.1 on a
+  wider scenario set than the one simulated here.
+- Coverage previously used a fixed $z = 1.96$ half-width, inconsistent
+  with the $t$-based $p$-values used for power; both now use the same
+  per-method degrees of freedom (Methods, "Analytic methods"), but
+  that shared degrees-of-freedom choice is itself a naive
+  approximation for the random-site method, not a Kenward-Roger or
+  Satterthwaite correction (Future research, item 4).
+- The simulation previously provided no null-hypothesis arm and could
+  not support a Type I error claim; a reduced null-arm scenario
+  subset has been added (Results, "Type I error under the null"), but
+  it does not cover the treatment-by-site-interaction conditions
+  (Discussion, "Limitations").
+
+**Still open:**
+
+- Per-replicate RNG states are captured in memory but not persisted
+  to `analysis/data/derived_data/rng_states.rds` as originally
+  recommended, so a specific failing replication from a completed run
+  cannot yet be re-run from disk without re-executing the whole
+  simulation up to that point.
+- `inst/tinytest/test_basic.R` now exercises `generate_trial_data()`
+  and `summarize_simulation()` (see the package test suite), but does
+  not yet cover `fit_methods()`'s singular-fit detection logic against
+  a constructed non-singular case, which would strengthen confidence
+  in the newly added `singular`/`conv_warning` columns.
 
 
 ```{r footer, echo=FALSE, results='asis'}

@@ -69,5 +69,46 @@ Files audited:
 Morris TP, White IR, Crowther MJ. Using simulation studies to evaluate
 statistical methods. Stat Med 2019;38:2074-2102. doi:10.1002/sim.8086
 
+## Update: 2026-08-13
+
+Following a referee-style review (`docs/pub_review_whitepaper_2026-08-13.md`),
+`analysis/scripts/sim_multicenter.R` and `analysis/report/report.Rmd` were
+revised. Status against the original scorecard above:
+
+- MCSE reported per metric — **Met** (was Not met). Added to
+  `summarize_simulation()` and displayed in Table 1/Table 3 of the report.
+- n_sim justified via MCSE — **Met** (was Not met). Corrected arithmetic
+  error in the report's derivation (the original text claimed R >= 1584 for
+  MCSE <= 0.6pp; the correct threshold is R >= 1320).
+- RNG states stored — **Partial** (was Not met). Captured in memory via
+  `run_simulation()`'s `rng_states` attribute; not yet persisted to a
+  sidecar RDS file on disk.
+- Reproducibility (RNGkind pinned) — **Met** (was Partial).
+- Paired comparisons — **Met** (was Partial). Non-convergence no longer
+  drops rows; all three methods' rows are retained per replication.
+
+New items identified during the 2026-08 review that were not part of the
+original ADEMP scorecard:
+
+- `fit_methods()` was silently treating singular/boundary `lmer` fits
+  (warning-only, not error) as ordinary convergence. Verified empirically:
+  53% of `lmer` fits were singular in a true-zero-site-variance scenario,
+  none previously flagged. Fixed by adding explicit `singular` and
+  `conv_warning` outcome columns.
+- The p-value's ad hoc `df_naive` (previously misleadingly named `df_kr`,
+  suggesting a Kenward-Roger correction that was never implemented) was
+  inconsistent with the CI's fixed z = 1.96 half-width. Both now use the
+  same per-method degrees of freedom.
+- No null-hypothesis (delta = 0) scenario existed, so the study could not
+  support a Type I error claim despite engaging literature centrally
+  concerned with Type I error under stratified randomization. A reduced
+  null-arm scenario subset (8 of the 16 alternative scenarios, omitting
+  the interaction conditions) was added.
+
+See `docs/pub_review_whitepaper_2026-08-13.md` for the full review and
+`docs/pub_review_whitepaper_2026-08-13.md`'s Revision History entry, to be
+updated after re-rendering, for confirmation that the fixes were verified
+against a fresh simulation run.
+
 ---
 *Source: ~/prj/res/07-multicenter-rct/multicenterrct/docs/morris-audit-2026-04-17.md*
