@@ -6,3 +6,7 @@
 |---|---|---|---|
 | `report-2026-08-13-1234-e586e83-wip.pdf` | `~/prj/res/07-multicenter-rct/multicenterrct/analysis/report/report.Rmd` | `e586e83-wip` | 2026-08-13 12:34 PDT |
 | `report-2026-08-13-1626-nogit.pdf` | `~/prj/res/07-multicenter-rct/multicenterrct/analysis/report/report.Rmd` | `nogit` | 2026-08-13 16:26 PDT |
+| `report-2026-08-14-1047-bebbabf-wip.pdf` | `~/prj/res/07-multicenter-rct/multicenterrct/analysis/report/report.Rmd` | `bebbabf-wip` | 2026-08-14 10:47 PDT |
+| `report-2026-08-14-1057-bebbabf-wip.pdf` | `~/prj/res/07-multicenter-rct/multicenterrct/analysis/report/report.Rmd` | `bebbabf-wip` | 2026-08-14 10:57 PDT |
+| `report-2026-08-14-1119-bebbabf-wip.pdf` | `~/prj/res/07-multicenter-rct/multicenterrct/analysis/report/report.Rmd` | `bebbabf-wip` | 2026-08-14 11:19 PDT |
+| `report-2026-08-14-1123-bebbabf-wip.pdf` | `~/prj/res/07-multicenter-rct/multicenterrct/analysis/report/report.Rmd` | `bebbabf-wip` | 2026-08-14 11:23 PDT |

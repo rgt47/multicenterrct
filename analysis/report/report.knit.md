@@ -2,7 +2,7 @@
 title: "Statistical Issues in Multicenter Randomized
   Clinical Trials"
 author: "Ronald G. Thomas, Ph.D.\\thanks{Wertheim School of Public Health, UCSD; ORCID: 0000-0003-1686-4965}"
-date: "`r format(Sys.Date(), '%B %d, %Y')`"
+date: "August 14, 2026"
 output:
   pdf_document:
     latex_engine: xelatex
@@ -50,27 +50,7 @@ header-includes:
   - \usepackage{setspace}
   - \setstretch{1.1}
 ---
-```{r include=F, echo=F}
-rm(list = ls())
-options(
-  knitr.kable.NA = "", dplyr.summarise.inform = FALSE,
-  dplyr.print_max = 1e9, knitr.table.format = "latex"
-)
-library(tidyverse)
-library(lme4)
-library(knitr)
-library(kableExtra)
-library(mvtnorm)
 
-opts_chunk$set(
-  warning = FALSE, message = FALSE, echo = FALSE,
-  fig.width = 4.5, fig.height = 3.5,
-  results = "asis", dev = "pdf",
-  cache.path = "cache/"
-)
-# source(here::here("analysis/scripts/zz.tools.R"))
-options(scipen = 1, digits = 3)
-```
 
 # Introduction
 
@@ -485,67 +465,30 @@ Each simulated dataset is analyzed by three methods:
 
 ## Simulation procedure
 
-```{r sim-run, cache=TRUE, cache.extra=tools::md5sum(here::here("analysis/scripts/sim_multicenter.R"))}
-source(here::here("analysis/scripts/sim_multicenter.R"))
-
-scenarios <- tibble::tribble(
-  ~label, ~n_sites, ~n_per_site, ~balanced,
-  ~sigma_site, ~sigma_trt_site, ~true_trt, ~sigma_e,
-  "K10_noVar_bal",     10, 20, TRUE,  0.0, 0.0, 0.3, 1,
-  "K10_modVar_bal",    10, 20, TRUE,  sqrt(0.10), 0.0, 0.3, 1,
-  "K10_hiVar_bal",     10, 20, TRUE,  sqrt(0.50), 0.0, 0.3, 1,
-  "K10_modVar_imbal",  10, 20, FALSE, sqrt(0.10), 0.0, 0.3, 1,
-  "K10_hiVar_imbal",   10, 20, FALSE, sqrt(0.50), 0.0, 0.3, 1,
-  "K10_modVar_int",    10, 20, TRUE,  sqrt(0.10), 0.2, 0.3, 1,
-  "K10_hiVar_int",     10, 20, TRUE,  sqrt(0.50), 0.2, 0.3, 1,
-  "K10_hiVar_int_imb", 10, 20, FALSE, sqrt(0.50), 0.2, 0.3, 1,
-  "K30_noVar_bal",     30, 20, TRUE,  0.0, 0.0, 0.3, 1,
-  "K30_modVar_bal",    30, 20, TRUE,  sqrt(0.10), 0.0, 0.3, 1,
-  "K30_hiVar_bal",     30, 20, TRUE,  sqrt(0.50), 0.0, 0.3, 1,
-  "K30_modVar_imbal",  30, 20, FALSE, sqrt(0.10), 0.0, 0.3, 1,
-  "K30_hiVar_imbal",   30, 20, FALSE, sqrt(0.50), 0.0, 0.3, 1,
-  "K30_modVar_int",    30, 20, TRUE,  sqrt(0.10), 0.2, 0.3, 1,
-  "K30_hiVar_int",     30, 20, TRUE,  sqrt(0.50), 0.2, 0.3, 1,
-  "K30_hiVar_int_imb", 30, 20, FALSE, sqrt(0.50), 0.2, 0.3, 1,
-  # Null-hypothesis arm (true_trt = 0): a reduced factorial subset
-  # of the eight alternative-hypothesis conditions above (dropping
-  # the treatment-by-site-interaction rows, since sigma_trt_site
-  # has no bearing on size when the average effect is null and
-  # dropping them keeps the added runtime modest), needed to
-  # estimate empirical Type I error rather than only coverage of a
-  # CI centered on a nonzero effect (see Results, "Type I error
-  # under the null").
-  "H0_K10_noVar_bal",    10, 20, TRUE,  0.0, 0.0, 0.0, 1,
-  "H0_K10_modVar_bal",   10, 20, TRUE,  sqrt(0.10), 0.0, 0.0, 1,
-  "H0_K10_hiVar_bal",    10, 20, TRUE,  sqrt(0.50), 0.0, 0.0, 1,
-  "H0_K10_hiVar_imbal",  10, 20, FALSE, sqrt(0.50), 0.0, 0.0, 1,
-  "H0_K30_noVar_bal",    30, 20, TRUE,  0.0, 0.0, 0.0, 1,
-  "H0_K30_modVar_bal",   30, 20, TRUE,  sqrt(0.10), 0.0, 0.0, 1,
-  "H0_K30_hiVar_bal",    30, 20, TRUE,  sqrt(0.50), 0.0, 0.0, 1,
-  "H0_K30_hiVar_imbal",  30, 20, FALSE, sqrt(0.50), 0.0, 0.0, 1
-)
-
-# Morris, White, and Crowther (2019) §4.1: pin RNGkind and set the
-# seed ONCE at the start of the program. `run_simulation()` no longer
-# accepts a `seed` argument; it consumes RNG state from the single
-# stream established here.
-RNGkind("L'Ecuyer-CMRG")
-set.seed(20260310)
-
-raw_results <- run_simulation(scenarios, n_sim = 1500)
-sim_summary <- summarize_simulation(raw_results)
-
-# The alternative-hypothesis scenarios (true_trt = 0.30) drive the
-# main results table and figures, as in the original design; the
-# null-hypothesis scenarios are reported separately (Results,
-# "Type I error under the null") because a CI's coverage of a
-# nonzero true effect is not the same quantity as the test's Type I
-# error rate under the null, and merging the two arms into one table
-# or one set of scenario-indexed figures would conflate them.
-sim_summary_alt <- dplyr::filter(sim_summary, true_trt > 0)
-sim_summary_null <- dplyr::filter(sim_summary, true_trt == 0)
-raw_results_alt <- dplyr::filter(raw_results, true_trt > 0)
-```
+Scenario 1/24: K10_noVar_bal ...
+Scenario 2/24: K10_modVar_bal ...
+Scenario 3/24: K10_hiVar_bal ...
+Scenario 4/24: K10_modVar_imbal ...
+Scenario 5/24: K10_hiVar_imbal ...
+Scenario 6/24: K10_modVar_int ...
+Scenario 7/24: K10_hiVar_int ...
+Scenario 8/24: K10_hiVar_int_imb ...
+Scenario 9/24: K30_noVar_bal ...
+Scenario 10/24: K30_modVar_bal ...
+Scenario 11/24: K30_hiVar_bal ...
+Scenario 12/24: K30_modVar_imbal ...
+Scenario 13/24: K30_hiVar_imbal ...
+Scenario 14/24: K30_modVar_int ...
+Scenario 15/24: K30_hiVar_int ...
+Scenario 16/24: K30_hiVar_int_imb ...
+Scenario 17/24: H0_K10_noVar_bal ...
+Scenario 18/24: H0_K10_modVar_bal ...
+Scenario 19/24: H0_K10_hiVar_bal ...
+Scenario 20/24: H0_K10_hiVar_imbal ...
+Scenario 21/24: H0_K30_noVar_bal ...
+Scenario 22/24: H0_K30_modVar_bal ...
+Scenario 23/24: H0_K30_hiVar_bal ...
+Scenario 24/24: H0_K30_hiVar_imbal ...
 
 Each scenario is replicated $R = 1{,}500$ times. The Monte Carlo SE
 of an estimated coverage or Type I error probability $p$ is
@@ -569,60 +512,32 @@ the simulation code.
 
 ## Headline findings
 
-```{r headline-07, include=FALSE}
-# Pull key numbers from the in-memory `sim_summary_alt` /
-# `sim_summary_null` produced by the `sim-run` chunk above. If the
-# sim has not run (e.g., cache invalid), these computations will
-# fail at knit time.
-hl_random <- sim_summary_alt |>
-  dplyr::filter(method == "random_site") |>
-  dplyr::summarise(
-    power_min = min(power), power_max = max(power),
-    cov_min = min(coverage), cov_max = max(coverage),
-    bias_abs_max = max(abs(bias)),
-    singular_max = max(singular_rate)
-  )
-hl_ignore <- sim_summary_alt |>
-  dplyr::filter(method == "ignore_site") |>
-  dplyr::summarise(
-    cov_min = min(coverage), cov_max = max(coverage),
-    power_min = min(power)
-  )
-hl_conv <- sim_summary_alt |>
-  dplyr::summarise(conv_min = min(convergence_rate))
-hl_t1 <- sim_summary_null |>
-  dplyr::group_by(method) |>
-  dplyr::summarise(
-    t1_min = min(power), t1_max = max(power), .groups = "drop"
-  )
-hl_t1_random <- dplyr::filter(hl_t1, method == "random_site")
-hl_t1_ignore <- dplyr::filter(hl_t1, method == "ignore_site")
-```
 
-We observe that across `r nrow(sim_summary_alt) / 3` alternative-
+
+We observe that across 16 alternative-
 hypothesis scenarios ($\delta = 0.30$) and $R = 1{,}500$
 replications per scenario, the random-site mixed model attained
 power between
-`r sprintf('%.2f', hl_random$power_min)` and
-`r sprintf('%.2f', hl_random$power_max)`, with coverage of
+0.54 and
+0.97, with coverage of
 the 95\% confidence interval ranging from
-`r sprintf('%.3f', hl_random$cov_min)` to
-`r sprintf('%.3f', hl_random$cov_max)` and absolute bias
+0.895 to
+0.960 and absolute bias
 never exceeding
-`r sprintf('%.3f', hl_random$bias_abs_max)`
+0.011
 (Morris Table 6 Monte Carlo SEs are given in parentheses next to
 the power and coverage point estimates in Table 1). The fixed-site
 estimator closely
 tracked the random-site estimator. Ignoring site entirely produced
 overcoverage (up to
-`r sprintf('%.3f', hl_ignore$cov_max)`) and correspondingly
+0.984) and correspondingly
 lower power (as low as
-`r sprintf('%.2f', hl_ignore$power_min)`) in scenarios with
+0.40) in scenarios with
 non-trivial between-site variance. The lowest convergence rate
 (hard \texttt{lmer} errors only) observed across any scenario or
-method was `r sprintf('%.3f', hl_conv$conv_min)`; however, the
+method was 1.000; however, the
 random-site model's *singular/boundary* fit rate reached as high as
-`r sprintf('%.3f', hl_random$singular_max)`
+0.557
 in the low- and no-site-variance scenarios, where the true
 random-intercept variance is at or near the parameter-space
 boundary. A singular fit still returns a usable point estimate, but
@@ -630,188 +545,96 @@ its variance-component estimate is degenerate; see "Type I error
 under the null" below and the Discussion for the implications. Under
 the null-hypothesis scenarios ($\delta = 0$; Table 2), the empirical
 Type I error rate for the random-site method ranged from
-`r sprintf('%.3f', hl_t1_random$t1_min)` to
-`r sprintf('%.3f', hl_t1_random$t1_max)`, and for the ignore-site
-method from `r sprintf('%.3f', hl_t1_ignore$t1_min)` to
-`r sprintf('%.3f', hl_t1_ignore$t1_max)`, against a nominal
+0.041 to
+0.068, and for the ignore-site
+method from 0.014 to
+0.047, against a nominal
 $\alpha = 0.05$.
 
 ## Summary of performance metrics
 
-```{r results-table}
-sim_display <- sim_summary_alt |>
-  mutate(
-    scenario = str_replace_all(scenario, "_", " "),
-    method = case_when(
-      method == "ignore_site" ~ "Ignore",
-      method == "fixed_site" ~ "Fixed",
-      method == "random_site" ~ "Random"
-    ),
-    convergence = sprintf("%.1f\\%%", 100 * n_converged / n_total),
-    singular = sprintf("%.1f\\%%", 100 * singular_rate),
-    power_mcse = sprintf("%.3f (%.3f)", power, mcse_power),
-    coverage_mcse = sprintf("%.3f (%.3f)", coverage, mcse_coverage)
-  ) |>
-  select(
-    Scenario = scenario, Method = method,
-    Bias = bias, `Emp. SE` = empirical_se,
-    `Model SE` = mean_model_se,
-    `Power (MCSE)` = power_mcse, `Coverage (MCSE)` = coverage_mcse,
-    Conv. = convergence, Sing. = singular
-  )
-
-kable(
-  sim_display,
-  format = "latex",
-  booktabs = TRUE,
-  digits = 3,
-  escape = FALSE,
-  caption = "Simulation results under the alternative hypothesis
-    ($\\delta = 0.30$): bias, standard error, power, and coverage
+\begin{table}[!h]
+\centering
+\caption{\label{tab:results-table}Simulation results under the alternative hypothesis
+    ($\delta = 0.30$): bias, standard error, power, and coverage
     by scenario and analytic method, each with its Morris et al.
     (2019) Table 6 Monte Carlo SE in parentheses where applicable.
     R = 1500 replications per scenario. `Conv.' is the rate of
-    successful \\texttt{lmer} fits (errors only); `Sing.' is the
+    successful \texttt{lmer} fits (errors only); `Sing.' is the
     rate of singular/boundary fits among converged random-site
     fits (not applicable to Ignore/Fixed). Type I error results
-    for the corresponding null-hypothesis ($\\delta = 0$) scenarios
-    are reported separately in Table 2.",
-  linesep = ""
-) |>
-  kable_styling(
-    latex_options = c("hold_position", "scale_down"),
-    font_size = 7
-  )
-```
+    for the corresponding null-hypothesis ($\delta = 0$) scenarios
+    are reported separately in Table 2.}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\fontsize{7}{9}\selectfont
+\begin{tabular}[t]{llrrrllll}
+\toprule
+Scenario & Method & Bias & Emp. SE & Model SE & Power (MCSE) & Coverage (MCSE) & Conv. & Sing.\\
+\midrule
+K10 hiVar bal & Fixed & -0.003 & 0.140 & 0.141 & 0.547 (0.013) & 0.960 (0.005) & 100.0\% & 0.0\%\\
+K10 hiVar bal & Ignore & -0.003 & 0.140 & 0.169 & 0.400 (0.013) & 0.984 (0.003) & 100.0\% & 0.0\%\\
+K10 hiVar bal & Random & -0.003 & 0.140 & 0.141 & 0.548 (0.013) & 0.960 (0.005) & 100.0\% & 0.0\%\\
+K10 hiVar imbal & Fixed & -0.001 & 0.141 & 0.141 & 0.558 (0.013) & 0.951 (0.006) & 100.0\% & 0.0\%\\
+K10 hiVar imbal & Ignore & -0.001 & 0.142 & 0.167 & 0.413 (0.013) & 0.979 (0.004) & 100.0\% & 0.0\%\\
+K10 hiVar imbal & Random & -0.001 & 0.141 & 0.141 & 0.557 (0.013) & 0.953 (0.005) & 100.0\% & 0.1\%\\
+K10 hiVar int & Fixed & 0.011 & 0.148 & 0.142 & 0.572 (0.013) & 0.939 (0.006) & 100.0\% & 0.0\%\\
+K10 hiVar int & Ignore & 0.011 & 0.148 & 0.171 & 0.428 (0.013) & 0.972 (0.004) & 100.0\% & 0.0\%\\
+K10 hiVar int & Random & 0.011 & 0.148 & 0.142 & 0.573 (0.013) & 0.939 (0.006) & 100.0\% & 0.0\%\\
+K10 hiVar int imb & Fixed & -0.007 & 0.173 & 0.142 & 0.537 (0.013) & 0.901 (0.008) & 100.0\% & 0.0\%\\
+K10 hiVar int imb & Ignore & -0.006 & 0.173 & 0.168 & 0.415 (0.013) & 0.934 (0.006) & 100.0\% & 0.0\%\\
+K10 hiVar int imb & Random & -0.007 & 0.173 & 0.142 & 0.537 (0.013) & 0.901 (0.008) & 100.0\% & 0.2\%\\
+K10 modVar bal & Fixed & 0.002 & 0.141 & 0.141 & 0.561 (0.013) & 0.949 (0.006) & 100.0\% & 0.0\%\\
+K10 modVar bal & Ignore & 0.002 & 0.141 & 0.148 & 0.533 (0.013) & 0.955 (0.005) & 100.0\% & 0.0\%\\
+K10 modVar bal & Random & 0.002 & 0.141 & 0.141 & 0.561 (0.013) & 0.949 (0.006) & 100.0\% & 3.2\%\\
+K10 modVar imbal & Fixed & -0.002 & 0.139 & 0.141 & 0.553 (0.013) & 0.957 (0.005) & 100.0\% & 0.0\%\\
+K10 modVar imbal & Ignore & -0.002 & 0.139 & 0.147 & 0.515 (0.013) & 0.965 (0.005) & 100.0\% & 0.0\%\\
+K10 modVar imbal & Random & -0.002 & 0.139 & 0.141 & 0.550 (0.013) & 0.958 (0.005) & 100.0\% & 8.2\%\\
+K10 modVar int & Fixed & 0.004 & 0.156 & 0.142 & 0.559 (0.013) & 0.928 (0.007) & 100.0\% & 0.0\%\\
+K10 modVar int & Ignore & 0.004 & 0.156 & 0.149 & 0.528 (0.013) & 0.942 (0.006) & 100.0\% & 0.0\%\\
+K10 modVar int & Random & 0.004 & 0.156 & 0.142 & 0.559 (0.013) & 0.928 (0.007) & 100.0\% & 3.1\%\\
+K10 noVar bal & Fixed & 0.003 & 0.140 & 0.142 & 0.569 (0.013) & 0.951 (0.006) & 100.0\% & 0.0\%\\
+K10 noVar bal & Ignore & 0.003 & 0.140 & 0.142 & 0.568 (0.013) & 0.950 (0.006) & 100.0\% & 0.0\%\\
+K10 noVar bal & Random & 0.003 & 0.140 & 0.141 & 0.573 (0.013) & 0.950 (0.006) & 100.0\% & 55.7\%\\
+K30 hiVar bal & Fixed & 0.001 & 0.082 & 0.082 & 0.947 (0.006) & 0.937 (0.006) & 100.0\% & 0.0\%\\
+K30 hiVar bal & Ignore & 0.001 & 0.082 & 0.099 & 0.898 (0.008) & 0.980 (0.004) & 100.0\% & 0.0\%\\
+K30 hiVar bal & Random & 0.001 & 0.082 & 0.082 & 0.947 (0.006) & 0.937 (0.006) & 100.0\% & 0.0\%\\
+K30 hiVar imbal & Fixed & 0.004 & 0.081 & 0.082 & 0.974 (0.004) & 0.947 (0.006) & 100.0\% & 0.0\%\\
+K30 hiVar imbal & Ignore & 0.004 & 0.081 & 0.098 & 0.919 (0.007) & 0.975 (0.004) & 100.0\% & 0.0\%\\
+K30 hiVar imbal & Random & 0.004 & 0.081 & 0.082 & 0.974 (0.004) & 0.948 (0.006) & 100.0\% & 0.0\%\\
+K30 hiVar int & Fixed & 0.003 & 0.092 & 0.082 & 0.937 (0.006) & 0.928 (0.007) & 100.0\% & 0.0\%\\
+K30 hiVar int & Ignore & 0.003 & 0.092 & 0.100 & 0.879 (0.008) & 0.972 (0.004) & 100.0\% & 0.0\%\\
+K30 hiVar int & Random & 0.003 & 0.092 & 0.082 & 0.937 (0.006) & 0.928 (0.007) & 100.0\% & 0.0\%\\
+K30 hiVar int imb & Fixed & 0.003 & 0.100 & 0.082 & 0.925 (0.007) & 0.894 (0.008) & 100.0\% & 0.0\%\\
+K30 hiVar int imb & Ignore & 0.003 & 0.101 & 0.099 & 0.855 (0.009) & 0.941 (0.006) & 100.0\% & 0.0\%\\
+K30 hiVar int imb & Random & 0.003 & 0.100 & 0.082 & 0.924 (0.007) & 0.895 (0.008) & 100.0\% & 0.0\%\\
+K30 modVar bal & Fixed & 0.001 & 0.079 & 0.082 & 0.963 (0.005) & 0.954 (0.005) & 100.0\% & 0.0\%\\
+K30 modVar bal & Ignore & 0.001 & 0.079 & 0.086 & 0.954 (0.005) & 0.963 (0.005) & 100.0\% & 0.0\%\\
+K30 modVar bal & Random & 0.001 & 0.079 & 0.082 & 0.963 (0.005) & 0.954 (0.005) & 100.0\% & 0.1\%\\
+K30 modVar imbal & Fixed & 0.000 & 0.081 & 0.082 & 0.959 (0.005) & 0.956 (0.005) & 100.0\% & 0.0\%\\
+K30 modVar imbal & Ignore & 0.000 & 0.081 & 0.085 & 0.948 (0.006) & 0.961 (0.005) & 100.0\% & 0.0\%\\
+K30 modVar imbal & Random & 0.000 & 0.081 & 0.082 & 0.956 (0.005) & 0.954 (0.005) & 100.0\% & 0.1\%\\
+K30 modVar int & Fixed & -0.002 & 0.091 & 0.082 & 0.936 (0.006) & 0.923 (0.007) & 100.0\% & 0.0\%\\
+K30 modVar int & Ignore & -0.002 & 0.091 & 0.086 & 0.918 (0.007) & 0.936 (0.006) & 100.0\% & 0.0\%\\
+K30 modVar int & Random & -0.002 & 0.091 & 0.082 & 0.936 (0.006) & 0.923 (0.007) & 100.0\% & 0.0\%\\
+K30 noVar bal & Fixed & 0.000 & 0.082 & 0.082 & 0.959 (0.005) & 0.943 (0.006) & 100.0\% & 0.0\%\\
+K30 noVar bal & Ignore & 0.000 & 0.082 & 0.082 & 0.960 (0.005) & 0.943 (0.006) & 100.0\% & 0.0\%\\
+K30 noVar bal & Random & 0.000 & 0.082 & 0.081 & 0.960 (0.005) & 0.943 (0.006) & 100.0\% & 52.7\%\\
+\bottomrule
+\end{tabular}}
+\end{table}
 
 ## Bias
 
-```{r fig-bias, fig.cap="Bias of the treatment effect estimate across scenarios and analytic methods. Dashed line at zero indicates no bias.", fig.width=5, fig.height=3.5}
-sim_summary_alt |>
-  mutate(
-    method = factor(method,
-      levels = c("ignore_site", "fixed_site",
-                 "random_site"),
-      labels = c("Ignore", "Fixed", "Random")
-    ),
-    k = ifelse(grepl("K10", scenario), "K = 10", "K = 30"),
-    scenario_short = str_remove(scenario, "K\\d+_")
-  ) |>
-  ggplot(aes(x = scenario_short, y = bias,
-             shape = method, linetype = method,
-             group = method)) +
-  geom_point(size = 2) +
-  geom_line() +
-  geom_hline(yintercept = 0, linetype = "dashed",
-             color = "grey50") +
-  facet_wrap(~k) +
-  scale_shape_manual(values = c(16, 17, 15)) +
-  scale_linetype_manual(values = c("solid", "dashed",
-                                   "dotted")) +
-  labs(x = NULL, y = "Bias",
-       shape = "Method", linetype = "Method") +
-  theme_minimal(base_size = 10) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1,
-                                   size = 6))
-```
+![Bias of the treatment effect estimate across scenarios and analytic methods. Dashed line at zero indicates no bias.](report_files/figure-latex/fig-bias-1.pdf) 
 
 ## Power and coverage
 
-```{r fig-power, fig.cap="Power (left) and coverage probability (right) across scenarios. Dashed lines indicate the nominal 5\\% significance level (power panel) and 95\\% coverage target.", fig.width=6, fig.height=3.5}
-p_data <- sim_summary_alt |>
-  mutate(
-    method = factor(method,
-      levels = c("ignore_site", "fixed_site",
-                 "random_site"),
-      labels = c("Ignore", "Fixed", "Random")
-    ),
-    k = ifelse(grepl("K10", scenario), "K = 10", "K = 30"),
-    scenario_short = str_remove(scenario, "K\\d+_")
-  )
-
-p1 <- p_data |>
-  ggplot(aes(x = scenario_short, y = power,
-             shape = method, linetype = method,
-             group = method)) +
-  geom_point(size = 2) +
-  geom_line() +
-  facet_wrap(~k) +
-  scale_shape_manual(values = c(16, 17, 15)) +
-  scale_linetype_manual(values = c("solid", "dashed",
-                                   "dotted")) +
-  labs(x = NULL, y = "Power",
-       shape = "Method", linetype = "Method") +
-  theme_minimal(base_size = 9) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1,
-                                   size = 5))
-
-p2 <- p_data |>
-  ggplot(aes(x = scenario_short, y = coverage,
-             shape = method, linetype = method,
-             group = method)) +
-  geom_point(size = 2) +
-  geom_line() +
-  geom_hline(yintercept = 0.95, linetype = "dashed",
-             color = "grey50") +
-  facet_wrap(~k) +
-  scale_shape_manual(values = c(16, 17, 15)) +
-  scale_linetype_manual(values = c("solid", "dashed",
-                                   "dotted")) +
-  labs(x = NULL, y = "Coverage",
-       shape = "Method", linetype = "Method") +
-  theme_minimal(base_size = 9) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1,
-                                   size = 5))
-
-gridExtra::grid.arrange(p1, p2, ncol = 2)
-```
+![Power (left) and coverage probability (right) across scenarios. Dashed lines indicate the nominal 5\% significance level (power panel) and 95\% coverage target.](report_files/figure-latex/fig-power-1.pdf) 
 
 ## Impact of imbalanced site sizes
 
-```{r fig-imbalance, fig.cap="Comparison of balanced versus imbalanced site sizes for the random effects method. Panels show empirical standard error (left) and power (right).", fig.width=5.5, fig.height=3}
-bal_data <- raw_results_alt |>
-  filter(method == "random_site", !is.na(est)) |>
-  mutate(
-    balanced = case_when(
-      grepl("bal$", scenario) ~ "Balanced",
-      grepl("imbal$|imb$", scenario) ~ "Imbalanced",
-      TRUE ~ NA_character_
-    ),
-    base = str_remove(scenario, "_bal$|_imbal$|_imb$"),
-    k = ifelse(grepl("K10", scenario), "K = 10", "K = 30")
-  ) |>
-  filter(!is.na(balanced))
-
-bal_summary <- bal_data |>
-  group_by(base, k, balanced) |>
-  summarize(
-    emp_se = sd(est),
-    power = mean(pval < 0.05),
-    .groups = "drop"
-  )
-
-p3 <- bal_summary |>
-  ggplot(aes(x = base, y = emp_se,
-             fill = balanced)) +
-  geom_col(position = "dodge", width = 0.6) +
-  scale_fill_manual(values = c("grey85", "grey45")) +
-  labs(x = NULL, y = "Empirical SE", fill = NULL) +
-  theme_minimal(base_size = 9) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1,
-                                   size = 6))
-
-p4 <- bal_summary |>
-  ggplot(aes(x = base, y = power,
-             fill = balanced)) +
-  geom_col(position = "dodge", width = 0.6) +
-  scale_fill_manual(values = c("grey85", "grey45")) +
-  labs(x = NULL, y = "Power", fill = NULL) +
-  theme_minimal(base_size = 9) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1,
-                                   size = 6))
-
-gridExtra::grid.arrange(p3, p4, ncol = 2)
-```
+![Comparison of balanced versus imbalanced site sizes for the random effects method. Panels show empirical standard error (left) and power (right).](report_files/figure-latex/fig-imbalance-1.pdf) 
 
 ## Type I error under the null
 
@@ -824,45 +647,48 @@ stratified-randomization literature motivating this study
 Table 2 reports the empirical rejection rate at $\alpha = 0.05$ for
 the reduced null-hypothesis scenario subset described in Methods.
 
-```{r results-table-null}
-sim_display_null <- sim_summary_null |>
-  mutate(
-    scenario = str_remove(scenario, "^H0_") |>
-      str_replace_all("_", " "),
-    method = case_when(
-      method == "ignore_site" ~ "Ignore",
-      method == "fixed_site" ~ "Fixed",
-      method == "random_site" ~ "Random"
-    ),
-    t1_mcse = sprintf("%.3f (%.3f)", power, mcse_power),
-    coverage_mcse = sprintf("%.3f (%.3f)", coverage, mcse_coverage),
-    singular = sprintf("%.1f\\%%", 100 * singular_rate)
-  ) |>
-  select(
-    Scenario = scenario, Method = method,
-    Bias = bias, `Type I error (MCSE)` = t1_mcse,
-    `Coverage (MCSE)` = coverage_mcse, Sing. = singular
-  )
-
-kable(
-  sim_display_null,
-  format = "latex",
-  booktabs = TRUE,
-  digits = 3,
-  escape = FALSE,
-  caption = "Empirical Type I error under the null hypothesis
-    ($\\delta = 0$) at nominal $\\alpha = 0.05$, by scenario and
+\begin{table}[!h]
+\centering
+\caption{\label{tab:results-table-null}Empirical Type I error under the null hypothesis
+    ($\delta = 0$) at nominal $\alpha = 0.05$, by scenario and
     analytic method, with Morris et al. (2019) Table 6 Monte Carlo
     SE in parentheses. R = 1500 replications per scenario. `Sing.'
     is the random-site singular/boundary-fit rate among converged
-    fits.",
-  linesep = ""
-) |>
-  kable_styling(
-    latex_options = c("hold_position", "scale_down"),
-    font_size = 8
-  )
-```
+    fits.}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\fontsize{8}{10}\selectfont
+\begin{tabular}[t]{llrlll}
+\toprule
+Scenario & Method & Bias & Type I error (MCSE) & Coverage (MCSE) & Sing.\\
+\midrule
+K10 hiVar bal & Fixed & 0.000 & 0.051 (0.006) & 0.949 (0.006) & 0.0\%\\
+K10 hiVar bal & Ignore & 0.000 & 0.021 (0.004) & 0.979 (0.004) & 0.0\%\\
+K10 hiVar bal & Random & 0.000 & 0.051 (0.006) & 0.949 (0.006) & 0.1\%\\
+K10 hiVar imbal & Fixed & -0.005 & 0.048 (0.006) & 0.952 (0.006) & 0.0\%\\
+K10 hiVar imbal & Ignore & -0.005 & 0.019 (0.003) & 0.981 (0.003) & 0.0\%\\
+K10 hiVar imbal & Random & -0.005 & 0.046 (0.005) & 0.954 (0.005) & 0.2\%\\
+K10 modVar bal & Fixed & 0.003 & 0.057 (0.006) & 0.943 (0.006) & 0.0\%\\
+K10 modVar bal & Ignore & 0.003 & 0.045 (0.005) & 0.955 (0.005) & 0.0\%\\
+K10 modVar bal & Random & 0.003 & 0.057 (0.006) & 0.943 (0.006) & 3.3\%\\
+K10 noVar bal & Fixed & 0.001 & 0.041 (0.005) & 0.959 (0.005) & 0.0\%\\
+K10 noVar bal & Ignore & 0.001 & 0.041 (0.005) & 0.959 (0.005) & 0.0\%\\
+K10 noVar bal & Random & 0.001 & 0.041 (0.005) & 0.959 (0.005) & 56.9\%\\
+K30 hiVar bal & Fixed & 0.001 & 0.048 (0.006) & 0.952 (0.006) & 0.0\%\\
+K30 hiVar bal & Ignore & 0.001 & 0.014 (0.003) & 0.986 (0.003) & 0.0\%\\
+K30 hiVar bal & Random & 0.001 & 0.048 (0.006) & 0.952 (0.006) & 0.0\%\\
+K30 hiVar imbal & Fixed & -0.004 & 0.065 (0.006) & 0.935 (0.006) & 0.0\%\\
+K30 hiVar imbal & Ignore & -0.004 & 0.023 (0.004) & 0.977 (0.004) & 0.0\%\\
+K30 hiVar imbal & Random & -0.004 & 0.068 (0.007) & 0.932 (0.007) & 0.0\%\\
+K30 modVar bal & Fixed & 0.000 & 0.052 (0.006) & 0.948 (0.006) & 0.0\%\\
+K30 modVar bal & Ignore & 0.000 & 0.042 (0.005) & 0.958 (0.005) & 0.0\%\\
+K30 modVar bal & Random & 0.000 & 0.052 (0.006) & 0.948 (0.006) & 0.0\%\\
+K30 noVar bal & Fixed & 0.001 & 0.047 (0.005) & 0.953 (0.005) & 0.0\%\\
+K30 noVar bal & Ignore & 0.001 & 0.047 (0.005) & 0.953 (0.005) & 0.0\%\\
+K30 noVar bal & Random & 0.001 & 0.048 (0.006) & 0.952 (0.006) & 53.9\%\\
+\bottomrule
+\end{tabular}}
+\end{table}
 
 All three methods maintain Type I error close to the nominal 5\%
 level across the null-hypothesis scenarios, including the
@@ -905,7 +731,7 @@ specifically to the no- and
 low-site-variance scenarios: the random-intercept model's
 variance component is frequently estimated at the
 parameter-space boundary there (singular/boundary fit rates
-up to `r sprintf('%.1f', 100 * hl_random$singular_max)`\%;
+up to 55.7\%;
 Table 1), which is expected behavior for REML at a
 near-zero true variance component but means the reported
 coverage and power for the random-site method in those
@@ -1162,12 +988,10 @@ original audit:**
   in the newly added `singular`/`conv_warning` columns.
 
 
-```{r footer, echo=FALSE, results='asis'}
-src <- sub("^/Users/zenn/(Library/CloudStorage/)?Dropbox/prj/", "~/prj/",
-           knitr::current_input(dir = TRUE))
-cat(sprintf(
-  "\n\\vfill\n\n---\n\n*Rendered on %s.*  \n*Source: `%s`*\n",
-  format(Sys.time(), "%Y-%m-%d at %H:%M %Z"),
-  src
-))
-```
+
+\vfill
+
+---
+
+*Rendered on 2026-08-14 at 11:23 PDT.*  
+*Source: `~/prj/res/07-multicenter-rct/multicenterrct/analysis/report/report.Rmd`*
