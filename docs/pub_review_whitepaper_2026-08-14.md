@@ -325,3 +325,44 @@ recomputed by this review from raw data.
   2026-08-13. Overall verdict revised from major revision to **minor
   revision**, reflecting genuine, independently verified progress on
   every correctness-level finding from the prior review.
+- 2026-08-14 (same-day follow-up, 13:07 PDT): All items from §4 were
+  addressed. M1 (Introduction/Discussion redundancy) resolved by
+  deleting the Discussion's full restatement and replacing it with a
+  one-sentence cross-reference to the Introduction subsection, which
+  keeps the sole full treatment in the accessible register. m1
+  (citation-colon spacing) resolved by naming the authors explicitly
+  and moving the citation into a bracket, matching the pattern used
+  everywhere else in the document. m2 (no computational-environment
+  disclosure) resolved by adding an R/`lme4`-version and
+  `renv.lock`/`renv::restore()` pointer to Data and Code Availability.
+  m3 (singular-fit test coverage) resolved by adding two tests that
+  the `singular` flag's *rate* actually discriminates a
+  high-singularity configuration (empirically calibrated, ~55% over
+  40 reps) from a near-zero-singularity one (~0% over 40 reps), rather
+  than only checking the flag is non-`NA`. m4 (RNG state persistence)
+  resolved: `run_simulation()` gained an `rng_state_path` argument and
+  now writes per-replicate states, keyed by scenario and index, to
+  `analysis/data/derived_data/rng_states.rds`; verified present after
+  the full render (939 KB). Item 3, the random-slopes model, was
+  implemented as a fourth analytic method fit on every replicate for
+  a paired comparison and reported in a new Results subsection and
+  Table 3, scoped to the six treatment-by-site-interaction scenarios
+  where it is the correctly specified model; the full 24-scenario x
+  1,500-replication x 4-method simulation was re-run (~29 minutes),
+  and the rendered PDF was checked directly, which caught a real bug
+  this remediation pass introduced: the coverage-gain narrative first
+  reported "+0.020 to +0.039 percentage points" (a units error --
+  proportions, not multiplied by 100 into percentage points) and
+  characterized a consistent, direction-uniform +2.0 to +3.9
+  percentage-point coverage improvement across all six scenarios as a
+  "modest shift... not substantially compromised," an interpretation
+  written before the simulation had actually been re-run and not
+  corrected against the real numbers until this verification step.
+  Both the units bug and the interpretive mischaracterization were
+  fixed and the report re-rendered before this entry was written. The
+  recommended framing shift (title, abstract register) remains the
+  one open item from §4, an editorial decision left to the author.
+  All four major-issue-category items and the four minor items are
+  now resolved; the test suite (17/17, up from 15) and a full parse
+  check were run before each render in this pass, not only at the
+  end.
