@@ -148,6 +148,54 @@ fit_methods <- function(dat) {
     )
   }
 
+  # Method 4: Random slopes (random intercept AND random treatment
+  # slope per site). The correctly specified model under the
+  # treatment-by-site-interaction data-generating mechanism
+  # (report.Rmd, "Data generating model": gamma_i is a random slope),
+  # unlike Method 3, which fits only a random intercept and is
+  # misspecified whenever sigma_trt_site > 0. Computed for every
+  # replicate (paired with the other three methods on the same
+  # generated data, per Morris §4.2), but only reported for the
+  # treatment-by-site-interaction scenarios (see report.Rmd, "Random
+  # slopes under treatment-by-site interaction"); random-slope
+  # variance components are frequently at or near the boundary when
+  # the true interaction variance is zero or small, exactly as the
+  # random-intercept model is for site variance, so the same
+  # singular/conv_warning tracking applies.
+  m4 <- tryCatch(
+    lmer(y ~ trt + (1 + trt | site), data = dat, REML = TRUE),
+    error = function(e) NULL,
+    warning = function(w) {
+      suppressWarnings(
+        lmer(y ~ trt + (1 + trt | site), data = dat, REML = TRUE)
+      )
+    }
+  )
+  if (!is.null(m4)) {
+    s4 <- summary(m4)$coefficients["trt", ]
+    df_naive4 <- nrow(dat) - length(fixef(m4))
+    pval4 <- 2 * pt(-abs(s4[1] / s4[2]), df = df_naive4)
+    results$random_slope <- tibble::tibble(
+      method = "random_slope",
+      est = s4[1],
+      se = s4[2],
+      pval = pval4,
+      df = df_naive4,
+      singular = lme4::isSingular(m4),
+      conv_warning = length(m4@optinfo$conv$lme4$messages) > 0
+    )
+  } else {
+    results$random_slope <- tibble::tibble(
+      method = "random_slope",
+      est = NA_real_,
+      se = NA_real_,
+      pval = NA_real_,
+      df = NA_real_,
+      singular = NA,
+      conv_warning = NA
+    )
+  }
+
   dplyr::bind_rows(results)
 }
 
@@ -164,13 +212,19 @@ run_one_rep <- function(
   fit_methods(dat)
 }
 
-run_simulation <- function(scenarios, n_sim = 1000) {
+run_simulation <- function(scenarios, n_sim = 1000, rng_state_path = NULL) {
   # Morris, White, and Crowther (2019) §4.1: the RNG seed is set ONCE
   # by the caller; this function does not call set.seed(). Per-replicate
   # RNG states are captured and attached as an attribute of the return
-  # value for diagnostic reproducibility of any failing rep.
+  # value for diagnostic reproducibility of any failing rep. If
+  # `rng_state_path` is supplied, the same states are also persisted to
+  # disk (keyed by scenario label and replicate index), so a specific
+  # failing or singular replication can be re-run in isolation via
+  # `with_rng_state()`-style `.Random.seed` restoration without
+  # re-executing the whole simulation up to that point.
   all_results <- vector("list", nrow(scenarios) * n_sim)
   rng_states <- vector("list", nrow(scenarios) * n_sim)
+  rng_index <- vector("list", nrow(scenarios) * n_sim)
   idx <- 0L
 
   for (i in seq_len(nrow(scenarios))) {
@@ -183,6 +237,7 @@ run_simulation <- function(scenarios, n_sim = 1000) {
     for (r in seq_len(n_sim)) {
       idx <- idx + 1L
       rng_states[[idx]] <- .Random.seed
+      rng_index[[idx]] <- tibble::tibble(scenario = sc$label, rep = r)
       res <- tryCatch(
         run_one_rep(
           n_sites = sc$n_sites,
@@ -196,7 +251,7 @@ run_simulation <- function(scenarios, n_sim = 1000) {
         error = function(e) {
           tibble::tibble(
             method = c("ignore_site", "fixed_site",
-                       "random_site"),
+                       "random_site", "random_slope"),
             est = NA_real_, se = NA_real_, pval = NA_real_,
             df = NA_real_, singular = NA, conv_warning = NA
           )
@@ -211,6 +266,16 @@ run_simulation <- function(scenarios, n_sim = 1000) {
 
   out <- dplyr::bind_rows(all_results)
   attr(out, "rng_states") <- rng_states
+
+  if (!is.null(rng_state_path)) {
+    dir.create(dirname(rng_state_path), recursive = TRUE,
+               showWarnings = FALSE)
+    saveRDS(
+      list(index = dplyr::bind_rows(rng_index), states = rng_states),
+      rng_state_path
+    )
+  }
+
   out
 }
 

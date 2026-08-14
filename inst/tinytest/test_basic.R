@@ -54,12 +54,13 @@ if (!is.na(sim_script)) {
     sigma_site = 0.1, sigma_trt_site = 0, true_trt = 0.3, sigma_e = 1
   )
   fit3 <- fit_methods(dat3)
-  expect_equal(nrow(fit3), 3, info = "one row per analytic method")
+  expect_equal(nrow(fit3), 4, info = "one row per analytic method")
   expect_true(all(c("method", "est", "se", "pval", "df", "singular",
                      "conv_warning") %in% names(fit3)),
     info = "fit_methods() returns df/singular/conv_warning diagnostics")
   expect_equal(sort(fit3$method),
-    sort(c("ignore_site", "fixed_site", "random_site")))
+    sort(c("ignore_site", "fixed_site", "random_site",
+           "random_slope")))
 
   # fit_methods(): the random-site `singular` flag is a determinate
   # logical (not silently NA) whenever the model converges -- this is
@@ -76,6 +77,47 @@ if (!is.na(sim_script)) {
     is.logical(random_row$singular) && !is.na(random_row$singular),
     info = "singular is a determinate logical for a converged random-site fit"
   )
+
+  # fit_methods(): `singular` actually discriminates, rather than
+  # being a determinate flag that happens to always read the same
+  # value. Rates, not single draws, because REML's boundary behavior
+  # is itself stochastic even when the true variance component is
+  # exactly zero -- empirically calibrated (see review notes) so the
+  # gap between the two rates is large relative to sampling noise at
+  # these repetition counts.
+  singular_rate_over <- function(n_sites, n_per_site, sigma_site, n_rep) {
+    mean(vapply(seq_len(n_rep), function(i) {
+      dat <- generate_trial_data(
+        n_sites = n_sites, n_per_site = n_per_site, balanced = TRUE,
+        sigma_site = sigma_site, sigma_trt_site = 0,
+        true_trt = 0.3, sigma_e = 1
+      )
+      f <- fit_methods(dat)
+      f$singular[f$method == "random_site"]
+    }, logical(1)))
+  }
+
+  set.seed(5)
+  rate_zero_var <- singular_rate_over(
+    n_sites = 4, n_per_site = 20, sigma_site = 0, n_rep = 40
+  )
+  expect_true(rate_zero_var > 0.25,
+    info = paste(
+      "singular fits are common (rate", round(rate_zero_var, 2),
+      "> 0.25 over 40 reps) when the true site variance is zero and",
+      "there are few sites"
+    ))
+
+  set.seed(6)
+  rate_high_var <- singular_rate_over(
+    n_sites = 30, n_per_site = 20, sigma_site = sqrt(0.50), n_rep = 40
+  )
+  expect_true(rate_high_var < 0.10,
+    info = paste(
+      "singular fits are rare (rate", round(rate_high_var, 2),
+      "< 0.10 over 40 reps) when the true site variance is large and",
+      "there are many sites"
+    ))
 
   # summarize_simulation(): closed-form checks on a small synthetic
   # input where the answer can be verified by hand, independent of

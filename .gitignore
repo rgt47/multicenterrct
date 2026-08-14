@@ -9,3 +9,11 @@ renv/library/
 renv/staging/
 .zzcollab.log
 .make/
+
+# Transient LaTeX/pdfcrop build byproducts from analysis/report
+# renders (tools/render.sh); the rendered .tex/.pdf/.log are tracked,
+# these intermediate files are not.
+analysis/report/tmp-pdfcrop-*.tex
+analysis/report/report.toc
+analysis/report/report.aux
+analysis/report/report.knit.md
