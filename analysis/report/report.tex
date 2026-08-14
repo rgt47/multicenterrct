@@ -125,8 +125,8 @@
   \renewcommand{\headrulewidth}{0pt}%
   \renewcommand{\footrulewidth}{0.4pt}}
 \renewcommand{\stampsource}{\textasciitilde{}/\allowbreak{}prj/\allowbreak{}res/\allowbreak{}07-multicenter-rct/\allowbreak{}multicenterrct/\allowbreak{}analysis/\allowbreak{}report/\allowbreak{}report.Rmd}
-\renewcommand{\stamptime}{2026-08-13 12:34 PDT}
-\renewcommand{\stampversion}{\detokenize{e586e83-wip}}
+\renewcommand{\stamptime}{2026-08-13 16:26 PDT}
+\renewcommand{\stampversion}{\detokenize{nogit}}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{lineno}
@@ -510,24 +510,23 @@ We observe that across 16 alternative- hypothesis scenarios
 (\(\delta = 0.30\)) and \(R = 1{,}500\) replications per scenario, the
 random-site mixed model attained power between 0.54 and 0.97, with
 coverage of the 95\% confidence interval ranging from 0.895 to 0.960 and
-absolute bias never exceeding 0.011 (Morris Table 6 Monte Carlo SEs for
-every metric in Table 1 are given in Table 2; the reported point
-estimates in Table 1 are unrounded relative to those MCSEs). The
-fixed-site estimator closely tracked the random-site estimator. Ignoring
-site entirely produced overcoverage (up to 0.984) and correspondingly
-lower power (as low as 0.40) in scenarios with non-trivial between-site
-variance. The lowest convergence rate (hard \texttt{lmer} errors only)
-observed across any scenario or method was 1.000; however, the
-random-site model's \emph{singular/boundary} fit rate reached as high as
-0.557 in the low- and no-site-variance scenarios, where the true
-random-intercept variance is at or near the parameter-space boundary. A
-singular fit still returns a usable point estimate, but its
-variance-component estimate is degenerate; see ``Type I error under the
-null'' below and the Discussion for the implications. Under the
-null-hypothesis scenarios (\(\delta = 0\); Table 3), the empirical Type
-I error rate for the random-site method ranged from 0.041 to 0.068, and
-for the ignore-site method from 0.014 to 0.047, against a nominal
-\(\alpha = 0.05\).
+absolute bias never exceeding 0.011 (Morris Table 6 Monte Carlo SEs are
+given in parentheses next to the power and coverage point estimates in
+Table 1). The fixed-site estimator closely tracked the random-site
+estimator. Ignoring site entirely produced overcoverage (up to 0.984)
+and correspondingly lower power (as low as 0.40) in scenarios with
+non-trivial between-site variance. The lowest convergence rate (hard
+\texttt{lmer} errors only) observed across any scenario or method was
+1.000; however, the random-site model's \emph{singular/boundary} fit
+rate reached as high as 0.557 in the low- and no-site-variance
+scenarios, where the true random-intercept variance is at or near the
+parameter-space boundary. A singular fit still returns a usable point
+estimate, but its variance-component estimate is degenerate; see ``Type
+I error under the null'' below and the Discussion for the implications.
+Under the null-hypothesis scenarios (\(\delta = 0\); Table 2), the
+empirical Type I error rate for the random-site method ranged from 0.041
+to 0.068, and for the ignore-site method from 0.014 to 0.047, against a
+nominal \(\alpha = 0.05\).
 
 \subsection{Summary of performance
 metrics}\label{summary-of-performance-metrics}
@@ -543,7 +542,7 @@ metrics}\label{summary-of-performance-metrics}
     rate of singular/boundary fits among converged random-site
     fits (not applicable to Ignore/Fixed). Type I error results
     for the corresponding null-hypothesis ($\delta = 0$) scenarios
-    are reported separately in Table 3.}
+    are reported separately in Table 2.}
 \centering
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
 \fontsize{7}{9}\selectfont
@@ -642,7 +641,7 @@ error rate of the associated test under a true null effect
 (\(\delta = 0\)), which is the quantity most directly relevant to the
 stratified-randomization literature motivating this study
 (\textsuperscript{\citeproc{ref-kahanImproperAnalysisTrials2012a}{10}};\textsuperscript{\citeproc{ref-kahanAdjustingMultiplePrognostic2013}{11}}).
-Table 3 reports the empirical rejection rate at \(\alpha = 0.05\) for
+Table 2 reports the empirical rejection rate at \(\alpha = 0.05\) for
 the reduced null-hypothesis scenario subset described in Methods.
 
 \begin{table}[!h]
@@ -698,7 +697,7 @@ CI -- that none of the three methods inflates the false-positive rate
 under the conditions simulated here. It does not, by itself, establish
 that the \(t\)-based reference distribution used for the random-site
 method (Methods, ``Analytic methods'') is correctly calibrated in
-general; the boundary/singular fits flagged in Table 1 and Table 3
+general; the boundary/singular fits flagged in Table 1 and Table 2
 return a point estimate and standard error that are numerically valid
 but whose sampling distribution at the parameter-space boundary is not
 guaranteed to match the naive \(t\) approximation used here, and this
@@ -794,7 +793,7 @@ not assessed here and is a natural extension once the random-slopes
 model above is implemented. The random-site method's \(p\)-values and
 CIs both use an \(N\)-minus-fixed-effects degrees of freedom that is not
 a Kenward-Roger or Satterthwaite correction (Methods, ``Analytic
-methods''); the null-arm results in Table 3 show this approximation was
+methods''); the null-arm results in Table 2 show this approximation was
 not anti-conservative in the scenarios simulated, but that is not a
 general guarantee, particularly for the boundary/singular fits discussed
 above.
@@ -829,7 +828,7 @@ Several directions warrant further investigation:
   naive \(N\)-minus-fixed-effects degrees of freedom for the random-site
   method's \(p\)-values and CIs (Methods, ``Analytic methods''), which
   performed adequately in the null-arm scenarios simulated here (Table
-  3) but is not a general substitute for a proper small-sample
+  2) but is not a general substitute for a proper small-sample
   correction. Kenward-Roger or Satterthwaite denominator degrees of
   freedom corrections (available in \texttt{lmerTest}) should be
   substituted and evaluated across the same scenario grid, particularly
@@ -891,7 +890,7 @@ appended to that file.
   \texttt{mcse\_coverage}, \texttt{mcse\_convergence},
   \texttt{mcse\_singular\_rate}) and are displayed alongside the
   corresponding point estimates for power and coverage in Table 1 and
-  Table 3.
+  Table 2.
 \item
   \texttt{R\ =\ 1500} is now justified by an explicit Monte Carlo SE
   derivation (Methods, ``Simulation procedure'').
@@ -962,7 +961,7 @@ original audit:}
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
-\emph{Rendered on 2026-08-13 at 12:58 PDT.}\\
+\emph{Rendered on 2026-08-13 at 16:26 PDT.}\\
 \emph{Source:
 \texttt{\textasciitilde{}/prj/res/07-multicenter-rct/multicenterrct/analysis/report/report.Rmd}}
 

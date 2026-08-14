@@ -5,3 +5,4 @@
 | Staged PDF | Source | Version | Rendered |
 |---|---|---|---|
 | `report-2026-08-13-1234-e586e83-wip.pdf` | `~/prj/res/07-multicenter-rct/multicenterrct/analysis/report/report.Rmd` | `e586e83-wip` | 2026-08-13 12:34 PDT |
+| `report-2026-08-13-1626-nogit.pdf` | `~/prj/res/07-multicenter-rct/multicenterrct/analysis/report/report.Rmd` | `nogit` | 2026-08-13 16:26 PDT |
