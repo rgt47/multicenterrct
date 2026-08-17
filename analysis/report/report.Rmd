@@ -778,7 +778,7 @@ sim_summary_alt |>
 
 ## Power and coverage
 
-```{r fig-power, fig.cap="Power (left) and coverage probability (right) across scenarios. Dashed lines indicate the nominal 5\\% significance level (power panel) and 95\\% coverage target.", fig.width=6, fig.height=3.5}
+```{r fig-power, fig.cap="Power (left) and coverage probability (right) across scenarios. Dashed line indicates the 95\\% coverage target (right panel).", fig.width=6, fig.height=3.5}
 p_data <- sim_summary_alt |>
   mutate(
     method = factor(method,
@@ -1287,6 +1287,12 @@ standards proposed by Morris, White, and Crowther
   from a completed run can be re-run in isolation via
   `with_rng_state()`-style `.Random.seed` restoration without
   re-executing the whole simulation up to that point.
+- A random-slopes method (Method 4 in "Analytic methods") is now
+  implemented in `sim_multicenter.R::fit_methods()`, fit on every
+  replicate, and reported in a dedicated Results subsection
+  ("Random slopes under treatment-by-site interaction") and Table 3
+  for the six treatment-by-site-interaction scenarios, with the
+  coverage gain and singular-fit rate reported in the abstract.
 
 **Gaps identified in the 2026-08 revision, not present in the
 original audit:**
@@ -1311,9 +1317,10 @@ original audit:**
 
 **Still open:**
 
-- The random-effects model fitted throughout includes only a random
-  intercept; Future research item 1 (a random-slopes extension) has
-  not yet been implemented, so the treatment-by-site-interaction
-  scenarios are analyzed by a specification the paper's own Discussion
-  and Limitations sections describe as misspecified for that
-  generating mechanism.
+- The random-slopes method (Method 4) is reported only for the six
+  treatment-by-site-interaction scenarios under the true alternative;
+  the null-hypothesis arm does not yet cover the random-slopes
+  method, and the $K$/$\sigma^2_\alpha$/balance factorial grid used
+  for the random-intercept comparison has not been extended to the
+  random-slopes method (Future research, item 1; Discussion,
+  "Limitations").

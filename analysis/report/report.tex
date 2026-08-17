@@ -139,8 +139,8 @@
   \renewcommand{\headrulewidth}{0pt}%
   \renewcommand{\footrulewidth}{0.4pt}}
 \renewcommand{\stampsource}{\textasciitilde{}/\allowbreak{}prj/\allowbreak{}res/\allowbreak{}07-multicenter-rct/\allowbreak{}multicenterrct/\allowbreak{}analysis/\allowbreak{}report/\allowbreak{}report.Rmd}
-\renewcommand{\stamptime}{2026-08-15 16:33 PDT}
-\renewcommand{\stampversion}{\detokenize{9c49deb}}
+\renewcommand{\stamptime}{2026-08-16 16:17 PDT}
+\renewcommand{\stampversion}{\detokenize{b98bca6-wip}}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
@@ -177,7 +177,7 @@
 
 \title{Statistical Issues in Multicenter Randomized Clinical Trials}
 \author{Ronald G. Thomas, Ph.D.\thanks{Wertheim School of Public Health, UCSD; ORCID: 0000-0003-1686-4965}}
-\date{August 15, 2026}
+\date{August 16, 2026}
 
 \begin{document}
 \maketitle
@@ -829,8 +829,8 @@ K30 noVar bal & Random & 0.000 & 0.082 & 0.081 & 0.960 (0.005) & 0.943 (0.006) &
 
 \begin{figure}
 \centering
-\pandocbounded{\includegraphics[keepaspectratio,alt={\label{fig:fig-power}Power (left) and coverage probability (right) across scenarios. Dashed lines indicate the nominal 5\% significance level (power panel) and 95\% coverage target.}]{report_files/report_files/figure-latex/fig-power-1.pdf}}
-\caption{\label{fig:fig-power}Power (left) and coverage probability (right) across scenarios. Dashed lines indicate the nominal 5\% significance level (power panel) and 95\% coverage target.}
+\pandocbounded{\includegraphics[keepaspectratio,alt={\label{fig:fig-power}Power (left) and coverage probability (right) across scenarios. Dashed line indicates the 95\% coverage target (right panel).}]{report_files/report_files/figure-latex/fig-power-1.pdf}}
+\caption{\label{fig:fig-power}Power (left) and coverage probability (right) across scenarios. Dashed line indicates the 95\% coverage target (right panel).}
 \end{figure}
 
 \subsection{Impact of imbalanced site sizes}\label{impact-of-imbalanced-site-sizes}
@@ -1235,6 +1235,13 @@ standards proposed by Morris, White, and Crowther\textsuperscript{\citeproc{ref-
   from a completed run can be re-run in isolation via
   \texttt{with\_rng\_state()}-style \texttt{.Random.seed} restoration without
   re-executing the whole simulation up to that point.
+\item
+  A random-slopes method (Method 4 in ``Analytic methods'') is now
+  implemented in \texttt{sim\_multicenter.R::fit\_methods()}, fit on every
+  replicate, and reported in a dedicated Results subsection
+  (``Random slopes under treatment-by-site interaction'') and Table 3
+  for the six treatment-by-site-interaction scenarios, with the
+  coverage gain and singular-fit rate reported in the abstract.
 \end{itemize}
 
 \textbf{Gaps identified in the 2026-08 revision, not present in the
@@ -1269,12 +1276,13 @@ original audit:}
 \begin{itemize}
 \tightlist
 \item
-  The random-effects model fitted throughout includes only a random
-  intercept; Future research item 1 (a random-slopes extension) has
-  not yet been implemented, so the treatment-by-site-interaction
-  scenarios are analyzed by a specification the paper's own Discussion
-  and Limitations sections describe as misspecified for that
-  generating mechanism.
+  The random-slopes method (Method 4) is reported only for the six
+  treatment-by-site-interaction scenarios under the true alternative;
+  the null-hypothesis arm does not yet cover the random-slopes
+  method, and the \(K\)/\(\sigma^2_\alpha\)/balance factorial grid used
+  for the random-intercept comparison has not been extended to the
+  random-slopes method (Future research, item 1; Discussion,
+  ``Limitations'').
 \end{itemize}
 
 \protect\phantomsection\label{refs}

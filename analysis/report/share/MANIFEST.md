@@ -14,3 +14,4 @@
 | `report-2026-08-14-1217-6d8f417-wip.pdf` | `~/prj/res/07-multicenter-rct/multicenterrct/analysis/report/report.Rmd` | `6d8f417-wip` | 2026-08-14 12:17 PDT |
 | `report-2026-08-14-1253-6d8f417-wip.pdf` | `~/prj/res/07-multicenter-rct/multicenterrct/analysis/report/report.Rmd` | `6d8f417-wip` | 2026-08-14 12:53 PDT |
 | `report-2026-08-15-1633-9c49deb.pdf` | `~/prj/res/07-multicenter-rct/multicenterrct/analysis/report/report.Rmd` | `9c49deb` | 2026-08-15 16:33 PDT |
+| `report-2026-08-16-1617-b98bca6-wip.pdf` | `~/prj/res/07-multicenter-rct/multicenterrct/analysis/report/report.Rmd` | `b98bca6-wip` | 2026-08-16 16:17 PDT |
