@@ -17,3 +17,13 @@ analysis/report/tmp-pdfcrop-*.tex
 analysis/report/report.toc
 analysis/report/report.aux
 analysis/report/report.knit.md
+
+# knitr chunk cache: a regenerable local build accelerator, not
+# reproducible source. Its __packages file records whatever packages
+# happened to be attached in the interactive session that built it
+# (not just packages the cached chunk actually uses) and knitr's
+# cache-restore path unconditionally library()s every name in that
+# file, so a stray package there (e.g. palmerpenguins, loaded from an
+# unrelated exploration session) breaks any environment that doesn't
+# have it -- this is exactly what broke Render Reports CI.
+analysis/report/cache/
