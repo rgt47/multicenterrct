@@ -6,31 +6,31 @@ date: '`r format(Sys.Date(), "%B %d, %Y")`'
 abstract: |
   Multicenter randomized controlled trials require a choice among
   ignoring, fixing, or randomizing site effects in the primary
-  analysis, and this choice interacts with stratified-randomization
+  analysis. This choice interacts with stratified-randomization
   adjustment, treatment-by-site interaction, and site-size balance.
   We report a factorial Monte Carlo simulation, structured under the
   ADEMP framework of Morris, White, and Crowther (2019), that jointly
   varies the number of sites, site-level variance, treatment-by-site
-  interaction, and site-size balance, comparing OLS ignoring site,
+  interaction, and site-size balance. We compare OLS ignoring site,
   OLS with fixed site effects, and a linear mixed model with random
   site effects. In addition to bias, empirical and model-based
   standard error, power, and coverage under a true alternative
   treatment effect, we report empirical Type I error under a true
   null effect, and singular/boundary-fit rates for the random-effects
-  model, both previously unreported in this simulation design. The
-  random-effects model attains the best combination of power and
-  coverage across most conditions; ignoring site produces conservative
-  (not anti-conservative) inference under stratified randomization,
-  consistent with prior work; and all three methods control Type I
-  error near the nominal level in the null-hypothesis scenarios
-  simulated. For the treatment-by-site-interaction scenarios, where
-  the random-intercept model is misspecified, we additionally fit and
-  compare a random-slopes model, finding consistently higher coverage
-  but a substantially higher singular-fit rate, a trade-off not
-  previously quantified in this simulation design. Every point
-  estimate is
-  reported with its Morris et al. Table 6 Monte Carlo standard error.
-  Code and a full ADEMP audit trail accompany the simulation.
+  model. Both outcomes were previously unreported in this simulation
+  design. The random-effects model attains the best combination of
+  power and coverage across most conditions. Ignoring site produces
+  conservative, not anti-conservative, inference under stratified
+  randomization, consistent with prior work. All three methods
+  control Type I error near the nominal level in the null-hypothesis
+  scenarios simulated. For the treatment-by-site-interaction
+  scenarios, where the random-intercept model is misspecified, we
+  additionally fit and compare a random-slopes model. We find
+  consistently higher coverage but a substantially higher
+  singular-fit rate, a trade-off not previously quantified in this
+  simulation design. We report every point estimate with its Morris
+  et al. Table 6 Monte Carlo standard error. Code and a full ADEMP
+  audit trail accompany the simulation.
 output:
   bookdown::pdf_document2:
     latex_engine: xelatex
