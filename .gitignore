@@ -27,3 +27,24 @@ analysis/report/report.knit.md
 # unrelated exploration session) breaks any environment that doesn't
 # have it -- this is exactly what broke Render Reports CI.
 analysis/report/cache/
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.idx
+*.ilg
+*.ind
+*.lof
+*.log
+*.lot
+*.nav
+*.out
+*.run.xml
+*.snm
+*.synctex.gz
+*.toc
+*.vrb
