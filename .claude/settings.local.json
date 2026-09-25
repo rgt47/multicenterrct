@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash tools/render.sh analysis/report/report.Rmd)",
+      "Bash(echo \"EXIT_CODE=$?\")",
+      "Read(//tmp/**)",
+      "Bash(pdftotext -layout report.pdf -)"
+    ]
+  }
+}
