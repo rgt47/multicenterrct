@@ -4,33 +4,32 @@ title: "Statistical Issues in Multicenter Randomized
 author: "Ronald G. Thomas, Ph.D.\\thanks{Wertheim School of Public Health, UCSD; ORCID: 0000-0003-1686-4965}"
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 abstract: |
-  Multicenter randomized controlled trials require a choice among
-  ignoring, fixing, or randomizing site effects in the primary
-  analysis. This choice interacts with stratified-randomization
-  adjustment, treatment-by-site interaction, and site-size balance.
-  We report a factorial Monte Carlo simulation, structured under the
-  ADEMP framework of Morris, White, and Crowther (2019), that jointly
-  varies the number of sites, site-level variance, treatment-by-site
-  interaction, and site-size balance. We compare OLS ignoring site,
-  OLS with fixed site effects, and a linear mixed model with random
-  site effects. In addition to bias, empirical and model-based
-  standard error, power, and coverage under a true alternative
-  treatment effect, we report empirical Type I error under a true
-  null effect, and singular/boundary-fit rates for the random-effects
-  model. Both outcomes were previously unreported in this simulation
-  design. The random-effects model attains the best combination of
-  power and coverage across most conditions. Ignoring site produces
-  conservative, not anti-conservative, inference under stratified
-  randomization, consistent with prior work. All three methods
-  control Type I error near the nominal level in the null-hypothesis
-  scenarios simulated. For the treatment-by-site-interaction
-  scenarios, where the random-intercept model is misspecified, we
-  additionally fit and compare a random-slopes model. We find
-  consistently higher coverage but a substantially higher
-  singular-fit rate, a trade-off not previously quantified in this
-  simulation design. We report every point estimate with its Morris
-  et al. Table 6 Monte Carlo standard error. Code and a full ADEMP
-  audit trail accompany the simulation.
+  Multicenter randomized trials require a choice among ignoring,
+  fixing, or randomizing site effects in the primary analysis. We
+  report a Monte Carlo simulation of this choice for a continuous
+  outcome, structured under the ADEMP framework of Morris, White,
+  and Crowther (2019). It varies the number of sites, the
+  site-level variance, treatment-by-site interaction, and
+  site-size balance. We compare OLS ignoring site, OLS with fixed
+  site effects, and a random-intercept linear mixed model. For
+  the interaction scenarios we add a random-slopes model.
+  Mixed-model tests use Satterthwaite degrees of freedom. We
+  report bias, standard errors, power, coverage, Type I error, and
+  singular-fit rates, each with its Monte Carlo standard error.
+  The study is a tutorial-style replication, and its main findings
+  agree with earlier simulation studies. With about 20 patients
+  per site and treatment balanced within site, the fixed-site and
+  random-site models were indistinguishable. Ignoring site gave
+  conservative inference, with Type I error well below the nominal
+  level and lower power. Under treatment-by-site interaction, the
+  fixed-site and random-intercept tests were anti-conservative for
+  the super-population mean effect. They were close to nominal for
+  the conditional effect in the sampled sites. The random-slopes
+  model restored coverage and Type I error. However, it lost
+  substantial power and returned frequent singular fits. Small
+  centers, many sites, and low intraclass correlation, where the
+  methods are known to differ, were not studied. Code for the
+  simulation is provided.
 output:
   bookdown::pdf_document2:
     latex_engine: xelatex
@@ -82,314 +81,327 @@ options(scipen = 1, digits = 3)
 
 Multicenter randomized clinical trials (RCTs) are the standard
 design for confirmatory evaluation of therapeutic
-interventions. By enrolling participants across multiple
-clinical sites, these trials achieve practical recruitment
-targets. They also broaden the population base, which helps
-generalize the findings [@iche9; @localio2001adjustments].
-However, the multicenter structure introduces several analytic
-complexities. If mishandled, these complexities can distort
-inference about treatment effects. We address four
-interrelated statistical issues that arise in the design and
+interventions. These trials enroll participants across several
+clinical sites. This lets them reach practical recruitment
+targets. It also broadens the population base, which helps the
+findings generalize [@iche9; @localio2001adjustments].
+However, the multicenter structure brings several analytic
+complications. If they are mishandled, they can distort
+inference about treatment effects. In this paper we address
+four related statistical issues. Each arises in the design and
 analysis of multicenter RCTs with continuous outcomes. We
-present simulation evidence bearing on each issue in turn.
+present simulation evidence on each issue in turn.
 
 ## Modeling site effects
 
-The first question concerns how site (or center) effects
-should be incorporated into the primary analysis. Three broad
-strategies exist: ignoring site differences entirely, treating
-sites as fixed effects, and treating sites as random effects
-drawn from a population of potential sites. Each strategy
-carries distinct assumptions. Each also has different
-implications for the validity and efficiency of treatment
+The first question is how site (or center) effects should
+enter the primary analysis. There are three broad strategies.
+The first ignores site differences entirely. The second treats
+sites as fixed effects. The third treats sites as random
+effects drawn from a population of potential sites. Each
+strategy carries its own assumptions. Each also has different
+consequences for the validity and efficiency of treatment
 effect estimation [@senn1998controversies; @jones1998comparison].
 
-Localio and colleagues provided an influential overview of the
-problem. They identified three analytic challenges inherent to
-multicenter data: within-center correlation of outcomes,
-confounding by center, and effect modification across centers
+Localio and colleagues gave an influential overview of the
+problem. They named three analytic challenges in multicenter
+data: within-center correlation of outcomes, confounding by
+center, and effect modification across centers
 [@localio2001adjustments]. The choice between fixed and random
-effects models has been debated extensively. Fixed effects
-models condition on the observed sites and make no
+effects models has been debated at length. Fixed effects
+models condition on the observed sites. They make no
 distributional assumptions about site effects. However, they
-consume degrees of freedom rapidly when the number of sites is
-large relative to total sample size [@pickering2007analysis].
-Random effects models instead treat site effects as
-realizations from a normal distribution. This approach
-estimates only a variance component, rather than individual
-site parameters, and thereby preserves statistical efficiency
-[@bates2015lme4]. We note that the ICH E9 guideline recommends
-mixed models as 'especially relevant when the number of sites
-is large' [@iche9].
+use up degrees of freedom quickly when the number of sites is
+large relative to the total sample size
+[@pickering2007analysis]. Random effects models instead treat
+site effects as draws from a normal distribution. This approach
+estimates only a variance component, not individual site
+parameters. Kahan and Morris found that it was at least as
+efficient as fixed effects in the settings they studied
+[@kahanmorris2013continuous]. We fit it with \texttt{lme4}
+[@bates2015lme4]. ICH E9 treats mixed models more narrowly. It
+describes them as a tool to 'explore the heterogeneity of the
+treatment effect'. In such models 'centre and
+treatment-by-centre effects' are random. E9 calls these models
+'especially relevant when the number of sites is large'
+[@iche9, Section 3.2]. The same section considers trials with
+too few patients per center to model center effects. For those
+trials it states that 'it is not appropriate to include a term
+for centre in the model'.
 
-Chu and colleagues conducted a comprehensive simulation
-comparing six analytic approaches for continuous outcomes.
-They varied the number of centers, center sizes, and the
-intraclass correlation coefficient (ICC) [@chu2011comparing].
-All methods yielded unbiased point estimates. However,
-ignoring centers inflated the standard error and reduced power
-when within-center correlation was present. The mixed-effects
-model attained nominal coverage and near-optimal power across
-nearly all configurations. Generalized estimating equations
-(GEE) underestimated the standard error when the number of
-centers was small.
+Chu and colleagues ran a comprehensive simulation of six
+analytic approaches for continuous outcomes. They varied the
+number of centers, the center sizes, and the intraclass
+correlation coefficient (ICC) [@chu2011comparing]. All methods
+gave unbiased point estimates. However, ignoring centers
+inflated the standard error when within-center correlation was
+present. It also reduced power. The mixed-effects model
+attained nominal coverage and near-optimal power in nearly all
+configurations. Generalized estimating equations (GEE)
+underestimated the standard error when there were few centers.
 
-Kahan and Morris extended these findings. They demonstrated
-that random center effects performed at least as well as fixed
-effects in all scenarios examined, and substantially
-outperformed them when the number of patients per center was
-small [@kahanmorris2013continuous]. Islam and Bangdiwala
-confirmed these patterns in a recent replication study with
-both continuous and binary outcomes, reinforcing the
-recommendation for random effects models as a default analytic
-strategy [@islam2024accounting].
+Kahan and Morris extended these findings. They showed that
+random center effects performed at least as well as fixed
+effects in every scenario they examined. Random effects did
+substantially better when each center had few patients
+[@kahanmorris2013continuous]. Islam and Bangdiwala confirmed
+these patterns in a recent replication study. Their study
+covered both continuous and binary outcomes. It supports
+random effects models as a default analytic strategy
+[@islam2024accounting].
 
-## What does "random" actually mean here?
+## What does 'random' mean here?
 
-Before going further, it is worth being precise about the
-word 'random.' This word carries most of the weight in the
-discussion above, and it can mean two different things. We
-spell out both meanings in plain terms, with the underlying
-math shown alongside, since the two meanings lead to two
-different arguments later in this Introduction.
+Before going further, we need to be precise about the word
+'random.' This word carries most of the weight in the
+discussion above. It can mean two different things. We spell
+out both meanings in plain terms, with the underlying
+mathematics alongside. The two meanings lead to two different
+arguments later in this Introduction.
 
 ### A hospital-specific shift, fixed or random
 
-Picture a trial run at ten hospitals. Each hospital has its
-own typical outcome level, for reasons that have nothing to
-do with the treatment being tested: a different mix of
-patients, different routine practices, different equipment.
-Call that hospital-specific shift $\alpha_i$, for hospital
-$i$. A simple model for one patient's outcome, written
-$Y_{ij}$ for patient $j$ at hospital $i$, looks like this:
+To illustrate, consider a trial run at ten hospitals. Each
+hospital has its own typical outcome level. The reasons have
+nothing to do with the treatment being tested. They include a
+different mix of patients, different routine practices, and
+different equipment. We call that hospital-specific shift
+$\alpha_i$, for hospital $i$. We write $Y_{ij}$ for the
+outcome of patient $j$ at hospital $i$. In symbols, a simple
+model for that outcome is:
 
 $$Y_{ij} = \alpha_i + \delta \, T_{ij} + \epsilon_{ij}$$
 
-Here $T_{ij}$ is 1 if that patient received the active
-treatment and 0 if not, $\delta$ is the treatment effect the
-trial wants to estimate, and $\epsilon_{ij}$ is ordinary
-patient-to-patient variation that has nothing to do with
-which hospital a patient attended.
+Here $T_{ij}$ is 1 if the patient received the active
+treatment and 0 if not. The quantity $\delta$ is the treatment
+effect the trial is designed to estimate. The term
+$\epsilon_{ij}$ is ordinary patient-to-patient variation. It
+has nothing to do with which hospital a patient attended.
 
-The open question is what kind of quantity $\alpha_i$ is.
+But what kind of quantity is $\alpha_i$?
 
-There are two options. The first treats each hospital's
-shift as an ordinary, fixed number, no different in kind from
-a patient's age or sex: something to adjust for, one number
-per hospital. Ten hospitals means ten fixed numbers to
-estimate.
+There are two options. The first treats each hospital's shift
+as an ordinary fixed number. In kind it is no different from a
+patient's age or sex. That is, it is something to adjust for,
+with one number per hospital. Ten hospitals means ten fixed
+numbers to estimate.
 
 The second option treats $\alpha_i$ as random, drawn from a
 normal distribution: $\alpha_i \sim N(0, \sigma^2_\alpha)$.
 Under this option, the one unknown quantity of real interest
 is $\sigma^2_\alpha$. That is, how much do hospitals
-typically differ from one another? Rather than estimating
-ten separate numbers, the analysis estimates a single number
-describing the *spread* of hospital effects.
+typically differ from one another? The analysis does not
+estimate ten separate numbers. Instead it estimates a single
+number that describes the *spread* of hospital effects.
 
-This is not a small technical difference. It changes what
-the analysis is entitled to claim. Estimating ten fixed
-numbers tells us only about these ten specific hospitals.
-Estimating one spread, $\sigma^2_\alpha$, is a broader claim.
-That is, it says something about hospital-to-hospital
-variation in general, of the kind we would expect if the
+This is not a small technical difference. It changes what the
+analysis is entitled to claim. Estimating ten fixed numbers
+tells us only about these ten specific hospitals. Estimating
+one spread, $\sigma^2_\alpha$, is a broader claim. That is, it
+says something about hospital-to-hospital variation in
+general. It describes the variation we would expect if the
 trial had, by chance, enrolled a different set of ten
-hospitals instead.
+hospitals.
 
 That broader claim is exactly where a disagreement in the
-published literature shows up. We return to it below.
+published literature appears. We return to it below.
 
-### Why the simulation needs a genuinely random site effect
+### Why the simulation redraws the site effects
 
-This paper is a computer simulation. It generates many
-pretend trials, over and over, and checks how well each
-analysis strategy (ignore site, treat site as fixed, treat
-site as random) recovers the true treatment effect and
-reports honest uncertainty around it. For that check to mean
-anything, the computer program that generates each pretend
-trial has to actually build in hospital-to-hospital
-variation. It has to do so afresh for every pretend trial,
-rather than reuse the same ten fixed numbers every time.
-
-That is what drawing $\alpha_i \sim N(0, \sigma^2_\alpha)$
-inside the simulation accomplishes. Every pretend trial gets
-its own new set of hospital shifts, all coming from a
-distribution with the same spread, $\sigma^2_\alpha$. Only
-by rebuilding this variation from scratch each time can the
-simulation ask a fair question. Namely, across many possible
-versions of 'a multicenter trial like this one,' does each
-analysis strategy give honest confidence intervals and
-adequate power? A simulation that reused the same fixed
-hospital numbers every time would not be testing that
-question at all. It would only be testing how well each
-method recovers one specific, already-fixed set of numbers.
-The later sections on treatment-by-site interaction and on
-imbalanced site sizes work the same way: each also needs a
-freshly drawn random ingredient, every pretend trial, for
-the same reason.
-
-We should be clear about what this operational choice does,
-and does not, claim. It is a requirement of building a fair
-test, not a statement about how real hospitals were chosen
-for a real trial. That second, separate question is the
-subject of the next section.
+The simulation draws new site effects
+$\alpha_i \sim N(0, \sigma^2_\alpha)$ for every simulated
+trial. This is needed for the performance measures to mean what
+we intend. Coverage and power are then averaged over many
+possible sets of sites, all with the same spread
+$\sigma^2_\alpha$. A simulation that reused one fixed set of
+site effects would assess each method only for those sites. The
+interaction effects $\gamma_i$ and the imbalanced site sizes
+are redrawn in the same way. This choice is a property of the
+simulation design. It is not a claim about how real hospitals
+are chosen for a real trial. That separate question is taken up
+next.
 
 ### Two different reasons statisticians give for treating site as random
 
 Everything so far concerns how the simulation is built. A
-separate question is why, in a real trial with real
-hospitals, an analyst should choose to treat site as random
-rather than fixed when fitting the actual statistical model.
-Published statisticians do not fully agree on the reason,
-even where they agree on the recommendation. We think a
-statistically literate reader deserves to know both
-arguments.
+separate question concerns a real trial with real hospitals.
+Why should an analyst treat site as random rather than fixed
+when fitting the actual statistical model? Published
+statisticians do not fully agree on the reason. They disagree
+even where they agree on the recommendation. In our view a
+statistically literate reader should know both arguments.
 
 The first argument says the random-effects model literally
 means what it appears to mean. That is, it treats the
 hospitals in the trial as if they had been drawn at random
-from a much larger population of possible hospitals.
-Falissard and Chavance make this point directly: the
-random-effects interpretation is only truly justified when
-the hospitals really were chosen at random from a wider
-population [@falissard1996effet]. In practice, that is
-almost never how hospitals are chosen. Hospitals join a
-trial because they can recruit patients quickly, because an
-investigator has a relationship with the study team, or
-because of funding and logistics, not by a lottery over all
-possible hospitals [@senn1998controversies].
+from a much larger population of possible hospitals. Falissard
+and Chavance make this point directly. In their view the
+random-effects interpretation is only truly justified when the
+hospitals really were chosen at random from a wider population
+[@falissard1996effet]. Unfortunately, in practice that is
+almost never how hospitals are chosen. Hospitals join a trial
+because they can recruit patients quickly. They may join
+because an investigator has a relationship with the study team.
+They may also join for reasons of funding and logistics. They
+are not chosen by a lottery over all possible hospitals [@senn1998controversies].
 
-The second argument does not depend on how the hospitals
-were chosen at all. Kahan and Morris justify adjusting for
-site on the design of the trial itself: patients were
-randomly split between treatment and control separately
-within each hospital, so the analysis should reflect that
-split, no matter how the hospitals themselves came to be in
-the trial [@kahanImproperAnalysisTrials2012a;
+The second argument does not depend on how the hospitals were
+chosen at all. Kahan and Morris justify adjusting for site on
+the design of the trial itself. Patients were randomly split
+between treatment and control separately within each hospital.
+As a result, the analysis should reflect that split. This holds
+no matter how the hospitals themselves came to be in the trial
+[@kahanImproperAnalysisTrials2012a;
 @kahanmorris2013continuous]. Edgar, Roberts, and Sharples
-reach the same conclusion by re-analyzing a real trial run
-across 271 hospitals in 40 countries. They recommend a
-random site effect for practical reasons, better power and
-less bias, again without any claim about hospitals being a
-random sample of a larger population [@edgar2021including].
+reach a similar conclusion on practical grounds. They
+re-analyzed CRASH-2, a trial with a binary outcome (death)
+analyzed in 271 centers in 40 countries. They report that random
+intercepts 'may increase power and decrease bias'
+[@edgar2021including]. Their evidence comes from a binary
+outcome, so it supports our continuous-outcome setting only
+indirectly.
 
 These two arguments do not agree on *why* a random site
-effect is the right choice, but they agree on *what to do*:
-prefer a random effect for site once there are more than a
-handful of hospitals. The recommendation in this paper rests
-on that agreement, so it stands regardless of which argument
-a reader finds more convincing. The simulation itself
-follows the second, design-based tradition in spirit. It
-builds hospital-to-hospital variation into every pretend
-trial as an operational necessity for testing the analysis
-strategies fairly (see above), without needing or claiming
-that real hospitals are ever a literal random sample of all
+effect is the right choice. However, they agree on *what to
+do*. That is, prefer a random effect for site once there are
+more than a handful of hospitals. The recommendation in this
+paper rests on that agreement. It therefore stands regardless
+of which argument a reader finds more convincing. We note that
+the simulation itself is a super-population model. It draws
+new site effects $\alpha_i$ for every simulated trial. A purely
+design-based study would instead hold the sites fixed and
+re-randomize only the treatment. Our performance measures are
+therefore averages over both sites and randomizations. They do
+not imply that real hospitals are a random sample of all
 possible hospitals.
 
 ## Failure to adjust for stratification variables
 
-The second issue concerns the consequences of ignoring
-stratification variables, including site, in the analysis.
-When randomization is stratified by center, as is standard
-in multicenter trials, failing to adjust for the
-stratification factor in the analysis leads to biased
-inference. Kahan and Morris demonstrated through simulation
-that an unadjusted analysis of a trial randomized with
-stratified blocks produces standard errors that are biased
-upward. It also produces confidence intervals that are too
-wide, Type I error rates below the nominal level, and a loss
-of statistical power [@kahanImproperAnalysisTrials2012a].
-This paradoxical conservatism arises because the stratified
-randomization induces negative correlation between treatment
-groups within strata. Ignoring this correlation inflates
-variance estimates.
+The second issue concerns what happens when the analysis
+ignores stratification variables, including site. In
+multicenter trials it is standard to stratify randomization by
+center. In that case, failing to adjust for the stratification
+factor in the analysis leads to biased inference. Kahan and
+Morris showed this through simulation. An unadjusted analysis
+of a trial randomized with stratified blocks gives standard
+errors that are biased upward. It also gives confidence
+intervals that are too wide and Type I error rates below the
+nominal level. Statistical power is lost as well
+[@kahanImproperAnalysisTrials2012a]. This conservatism has a
+simple source. Stratified randomization balances the arms
+within each site. A shared site effect then enters both arm
+means in the same way. As a result, the two arm means are
+positively correlated. The unadjusted variance formula ignores
+this covariance. It therefore overstates the variance of the
+difference in means.
 
-Kahan and Morris extended this work to trials with multiple
-stratification factors. They found that adjusting for the
-main effects of all stratification variables was generally
-sufficient, without requiring adjustment for all
-cross-classified strata
-[@kahanAdjustingMultiplePrognostic2013]. These findings
-align with the ICH E9 recommendation that 'the statistical
-model used for analysis should reflect the restriction
-imposed by the randomisation procedure' [@iche9], and with
-current regulatory guidance on covariate adjustment more
-broadly [@fda2023covariate].
+Kahan and Morris extended this work to trials with several
+stratification factors. They found that adjusting for the main
+effects of all stratification variables was generally enough.
+Adjustment for all cross-classified strata was not required
+[@kahanAdjustingMultiplePrognostic2013]. These findings agree
+with ICH E9. It states that 'Factors on which randomisation has
+been stratified should be accounted for later in the analysis'
+[@iche9, Section 2.3.2]. It also states that 'If one or more
+factors are used to stratify the design, it is appropriate to
+account for those factors in the analysis' [@iche9, Section
+5.7]. The findings also agree with current regulatory guidance
+on covariate adjustment [@fda2023covariate]. Bugni, Canay, and
+Shaikh gave the large-sample theory. They showed that the
+two-sample $t$-test is conservative under covariate-adaptive
+randomization [@bugni2018inference]. Ye and colleagues showed
+how to adjust for the randomization strata and gain efficiency
+[@ye2023toward].
 
 ## Treatment-by-site interaction
 
 The third concern is heterogeneity of the treatment effect
 across sites. Even under a common protocol, eligible
-participants, site practices, and investigator experience may
-vary, producing genuine treatment-by-site interaction
-[@fedorov2005misleading]. Senn argued that some degree of
-treatment-by-center interaction is inevitable in practice,
-and that a rational approach to planning multicenter trials
-should anticipate it [@senn1998controversies].
+participants may vary. So may site practices and investigator
+experience. The result is genuine treatment-by-site
+interaction [@fedorov2005misleading]. Senn argued that some
+degree of treatment-by-center interaction is inevitable in
+practice. In his view a rational approach to planning
+multicenter trials should anticipate it
+[@senn1998controversies].
 
-The ICH E9 guideline recommends first fitting a model without
-the interaction term to estimate the main treatment effect,
-and then examining heterogeneity as a secondary analysis.
-However, the power to detect treatment-by-site interaction is
-typically low. A non-significant interaction test therefore
-does not establish homogeneity [@sennlewis2019treatment].
-Jones and colleagues compared fixed-effects weighted
-estimators, unweighted estimators, and random effects
-estimators in the presence of varying degrees of
+The ICH E9 guideline recommends a two-step approach. First,
+fit a model without the interaction term to estimate the main
+treatment effect. Then examine heterogeneity as a secondary
+analysis. However, the power to detect treatment-by-site
+interaction is typically low. As a result, a non-significant
+interaction test does not establish homogeneity
+[@sennlewis2019treatment]. Jones and colleagues compared three
+kinds of estimator: fixed-effects weighted, unweighted, and
+random effects. They did so under varying degrees of
 treatment-by-center interaction [@jones1998comparison]. The
-fixed effects weighted estimator performed well across a
-range of interaction magnitudes. Unweighted estimators, on
-the other hand, could be inefficient when site sizes differed
-markedly.
+fixed effects weighted estimator performed well across a range
+of interaction magnitudes. Unweighted estimators, on the other
+hand, could be inefficient when site sizes differed markedly.
 
-When treatment-by-site interaction is modeled as random (that
-is, when the treatment slope varies across sites), the mixed
-model estimates both the average treatment effect and the
-variance of treatment effects across sites. This provides a
+Treatment-by-site interaction may be modeled as random. That
+is, the treatment slope may vary across sites. The mixed model
+then estimates both the average treatment effect and the
+variance of treatment effects across sites. This gives a
 natural summary of heterogeneity [@neuhaus2006separating].
 
 ## Imbalanced site sizes
 
-The fourth issue, closely related to the preceding three, is
-whether imbalance in site sizes affects inference. Multicenter
-trials frequently exhibit highly unequal enrollment across
-sites, with a few large sites contributing a disproportionate
-share of participants. Senn noted that a rational approach to
-planning multicenter trials leads naturally to unequal site
-sizes, because sites with higher recruitment capacity will
-enroll more patients within the trial's fixed time window
-[@senn1998controversies].
+The fourth issue is closely related to the preceding three. It
+is whether imbalance in site sizes affects inference.
+Enrollment in multicenter trials is often highly unequal
+across sites. In such trials, a few large sites contribute a
+disproportionate share of participants. Senn noted that a
+rational approach to planning multicenter trials leads
+naturally to unequal site sizes. Sites with higher recruitment
+capacity will enroll more patients within the trial's fixed
+time window [@senn1998controversies].
 
-Ruvuna introduced a coefficient of imbalance to quantify the
-power loss attributable to unequal center sizes. He showed
-that substantial imbalance can reduce power when an unweighted
+Ruvuna introduced a coefficient of imbalance. It quantifies
+the power loss due to unequal center sizes. He showed that
+substantial imbalance can reduce power when an unweighted
 (Type III) analysis is used [@ruvuna2004unequal]. Vierron and
 Giraudeau formalized this through a design effect framework.
-They demonstrated that the efficiency loss depends on both the
-ICC and a statistic quantifying the heterogeneity of group
-distributions across centers [@vierron2009design]. When the
-ICC is positive, balanced allocation is optimal, but moderate
-imbalance imposes only a modest efficiency penalty. The key
-risk emerges when site size is informative, that is, when
-larger sites systematically differ from smaller sites in
-patient characteristics or treatment delivery. This could
-potentially introduce bias into the treatment effect estimate
+They showed that the efficiency loss depends on two
+quantities. One is the ICC. The other is a statistic for the
+heterogeneity of group distributions across centers
+[@vierron2009design]. When the ICC is positive, balanced
+allocation is optimal. However, moderate imbalance imposes
+only a modest efficiency penalty. The key risk arises when
+site size is informative. That is, larger sites may
+systematically differ from smaller sites in patient
+characteristics or treatment delivery. This could possibly
+introduce bias into the treatment effect estimate
 [@fedorov2005misleading; @agresti2000strategies].
 
 ## Present study
 
-The existing literature provides clear theoretical guidance,
-but it offers limited integrated simulation evidence spanning
-all four issues simultaneously. We propose to close part of
-that gap. We present a Monte Carlo simulation that jointly
-varies the analytic method (ignore site, fixed site effects,
-random site effects), the presence or absence of
-treatment-by-site interaction, balanced versus imbalanced
-site sizes, and the magnitude of site-level variance. The
-simulation evaluates bias, empirical standard error,
-model-based standard error, power, and coverage probability
-of 95\% confidence intervals for the average treatment effect
-across all factorial combinations of these design features.
+The existing literature gives clear guidance on each issue
+separately. Chu and colleagues, Kahan and Morris, and Islam and
+Bangdiwala have already compared ignoring, fixing, and
+randomizing site by simulation. Islam and Bangdiwala also
+reported Type I and Type II error rates
+[@chu2011comparing; @kahanmorris2013continuous;
+@islam2024accounting]. Our study is a tutorial-style
+replication that places the four issues in one design. We do
+not claim new findings for the main fixed-versus-random
+comparison. The added elements are a treatment-by-site
+interaction arm with a random-slopes model and a matching null
+arm. We also report singular-fit rates throughout.
+
+The simulation varies the number of sites, the site-level
+variance, treatment-by-site interaction, and site-size
+balance. It covers 16 of the 24 cells formed by these factors
+(Methods, "Parameter values"). It evaluates bias, empirical
+and model-based standard error, power, and coverage of 95\%
+confidence intervals for the average treatment effect. Every
+site has about 20 patients, with treatment balanced within
+site. In this regime treatment is nearly orthogonal to site.
+As a result, the fixed and random site models are expected to
+agree closely. Earlier work finds that the methods differ with
+small centers, many sites relative to $N$, and low ICC
+[@pickering2007analysis; @kahanmorris2013continuous]. These
+regimes are outside our grid.
 
 # Methods
 
@@ -398,56 +410,58 @@ across all factorial combinations of these design features.
 Following Morris, White, and Crowther [-@morris2019using], we
 report the simulation under the ADEMP framework.
 
-- **Aims.** Compare three primary analytic strategies for handling
-  site heterogeneity in multicenter RCTs (ignore site, fixed site
-  effects, random site effects) across scenarios varying the number
-  of sites, site variance, treatment-by-site interaction, and
-  site-size balance; separately assess whether these strategies
-  control the Type I error rate under a true null treatment effect;
-  and, for the treatment-by-site-interaction scenarios specifically,
-  compare the random-intercept specification against a fourth,
-  correctly specified random-slopes method.
-- **Data-generating mechanism.** Detailed in the next subsection.
-- **Estimand.** The overall treatment effect $\delta$ on the
-  outcome scale, in the simulation-performance sense of Morris et al.
-  (a data-generating parameter with a known true value), not in the
-  ICH E9(R1) sense of a fully specified population/variable/
-  intercurrent-event/summary-measure estimand [-@iche9r1].
-- **Methods.** OLS ignoring site, OLS with fixed site effects, a
-  linear mixed model with random site effects, and (fit on every
-  replicate for a paired comparison, but reported only for the
-  treatment-by-site-interaction scenarios) a linear mixed model with
-  random site effects and a random treatment slope, all via
-  \texttt{lme4::lmer}. All four methods are tested and
-  interval-estimated using a $t$-reference distribution: the OLS
-  residual degrees of freedom for the ignore-site and fixed-site
-  methods, and $N$ minus the number of fixed-effect parameters for
-  the two mixed-model methods. The latter is a naive approximation,
-  not a Kenward-Roger or Satterthwaite denominator-df correction (see
-  Future research); it is used consistently for both the $p$-value
-  and the 95\% CI half-width for both mixed-model methods, replacing
-  an earlier implementation in which the $p$-value used this
-  $t$-approximation but the CI used a fixed $z = 1.96$ half-width
-  regardless of sample size or method.
-- **Performance measures.** Bias, empirical SE, MSE, mean model SE,
-  power at $\alpha = 0.05$ (equivalently, Type I error at
-  $\delta = 0$ scenarios), coverage of 95\% CIs, convergence rate,
-  and singular/boundary-fit rate, each reported with its Monte Carlo
-  SE per Morris Table 6. Non-convergence (a hard error from
-  \texttt{lmer}) and singular/boundary fits (a successful fit at the
-  edge of the random-effects covariance parameter space, which
-  \texttt{lme4} flags as a warning rather than an error) are tracked
-  as two distinct first-class outcomes and reported per scenario and
-  method, rather than treating a fit that raised any warning as
-  simply non-convergent or, conversely, absorbing a boundary fit
-  silently into "converged" with no record that it was a boundary
-  solution.
+- **Aims.** We compare three strategies for site heterogeneity:
+  ignore site, fixed site effects, and random site effects. The
+  scenarios vary the number of sites, the site variance,
+  treatment-by-site interaction, and site-size balance. We also
+  assess Type I error under a true null effect. For the
+  interaction scenarios we add a fourth method, a random-slopes
+  model.
+- **Data-generating mechanism.** This is detailed in the next
+  subsection.
+- **Estimand.** The primary target is $\delta$, the mean of the
+  super-population distribution of site-specific effects
+  $\delta + \gamma_i$. It is a data-generating parameter with a
+  known value, in the sense of Morris et al. With
+  $\sigma^2_\gamma > 0$, the methods do not all target $\delta$.
+  The fixed-site estimator targets a conditional quantity. That
+  is, it targets a weighted mean of the realized effects
+  $\delta + \gamma_i$ of the $K$ sampled sites. The weight of
+  site $i$ is $n_{i1} n_{i0} / n_i$, where $n_{i1}$ and $n_{i0}$
+  are its arm sizes. With unequal site sizes this is close to a
+  patient-weighted average, not a site-weighted average
+  [@kahan2023estimands]. We therefore also evaluate every method
+  against this conditional target. Neither target is a full ICH
+  E9(R1) estimand [-@iche9r1].
+- **Methods.** Ignore site and fixed site effects are fit by OLS
+  with \texttt{lm}. The random-intercept and random-slopes models
+  are fit by REML with \texttt{lme4::lmer} [@bates2015lme4]. All
+  four methods are fit to every replicate, so comparisons are
+  paired. The random-slopes model is reported for the interaction
+  scenarios and their null counterparts. Tests and 95\% CIs use a
+  $t$ reference distribution. For the OLS methods its df is the
+  residual df. For the two mixed models it is the Satterthwaite
+  df from \texttt{lmerTest} [@kuznetsova2017lmertest]. Luke found
+  that Satterthwaite and Kenward-Roger df both control Type I
+  error well in small samples [@luke2017evaluating;
+  @kenward1997small]. As a sensitivity analysis we repeat the
+  mixed-model tests and CIs with $K - 1$ df.
+- **Performance measures.** We report bias, empirical SE, MSE,
+  mean model SE, power at $\alpha = 0.05$, and coverage of 95\%
+  CIs. In the $\delta = 0$ scenarios, power is the Type I error
+  rate. We also report the convergence rate and the
+  singular-fit rate. Each measure has its Monte Carlo SE from
+  Morris Table 6. Non-convergence is a hard error from
+  \texttt{lmer}. A singular fit is a successful fit at the edge
+  of the variance parameter space. We track these two outcomes
+  separately for each scenario and method.
 
 ## Data generating model
 
 For each simulated trial, we generate data from a two-level
 model with patients nested within sites. Let $Y_{ij}$ denote
-the continuous outcome for patient $j$ at site $i$:
+the continuous outcome for patient $j$ at site $i$. In
+symbols,
 
 $$Y_{ij} = \alpha_i + (\delta + \gamma_i) T_{ij} + \epsilon_{ij}$$
 
@@ -455,10 +469,13 @@ where $\alpha_i \sim N(0, \sigma^2_{\alpha})$ is the
 random site intercept, $\delta = 0.30$ is the true average
 treatment effect, $\gamma_i \sim N(0, \sigma^2_{\gamma})$
 is the random treatment-by-site interaction,
-$T_{ij} \in \{0, 1\}$ is the treatment indicator
-(balanced within each site via permuted blocks), and
+$T_{ij} \in \{0, 1\}$ is the treatment indicator, and
 $\epsilon_{ij} \sim N(0, \sigma^2_e = 1)$ is the
-residual error.
+residual error. Within each site, treatment is assigned by one
+random permutation of a balanced 0/1 vector of length $n_i$.
+This gives complete balance within every site, or a difference
+of one when $n_i$ is odd. It is a single block per site, not a
+sequence of permuted blocks.
 
 ## Parameter values
 
@@ -470,21 +487,64 @@ The simulation crosses the following factors:
 - **Treatment-by-site interaction:**
   $\sigma^2_{\gamma} \in \{0, 0.04\}$ (none vs present)
 - **Site size balance:** balanced ($n_i = 20$ for all $i$)
-  vs imbalanced (site sizes drawn from a
-  $\text{Gamma}(0.8, 0.8/20)$ distribution, yielding a
-  coefficient of variation $\approx 1.1$)
+  vs imbalanced (see below)
 
-The true treatment effect is $\delta = 0.30$ across all
-scenarios. This represents a moderate standardized effect
-size of 0.30 standard deviations.
+```{r imbal-cv, include=FALSE}
+# Realized CV and total N of the imbalanced site-size generator.
+# Run before `sim-run`, which re-seeds the RNG itself, so these
+# draws do not affect the simulation stream.
+source(here::here("analysis/scripts/sim_multicenter.R"))
+set.seed(20261117)
+imbal_cv <- purrr::map_dfr(c(10, 30), function(k) {
+  draws <- purrr::map(seq_len(5000), function(i) {
+    as.numeric(table(generate_trial_data(
+      k, 20, FALSE, 0, 0, 0, 1
+    )$site))
+  })
+  tibble::tibble(
+    K = k,
+    cv = mean(purrr::map_dbl(draws, \(s) sd(s) / mean(s))),
+    n = mean(purrr::map_dbl(draws, sum))
+  )
+})
+```
+
+Imbalanced site sizes are generated in four steps. Raw sizes
+are drawn from a $\text{Gamma}(0.8, 0.8/20)$ distribution. They
+are rounded and floored at 4. They are then rescaled to sum to
+about $20K$, rounded, and floored at 4 again. The Gamma draw
+alone has a coefficient of variation (CV) of about 1.1. The
+flooring lowers it. Over 5,000 draws the realized mean CV was
+`r sprintf('%.2f', imbal_cv$cv[imbal_cv$K == 10])` for $K = 10$
+and `r sprintf('%.2f', imbal_cv$cv[imbal_cv$K == 30])` for
+$K = 30$. The total $N$ is not fixed. Its mean was
+`r sprintf('%.0f', imbal_cv$n[imbal_cv$K == 10])` and
+`r sprintf('%.0f', imbal_cv$n[imbal_cv$K == 30])`, against
+nominal values of 200 and 600.
+
+The factors are not fully crossed. For each $K$ the grid omits
+four of the twelve cells. These are imbalanced sizes with no
+site variance, interaction with no site variance (balanced and
+imbalanced), and interaction with moderate site variance and
+imbalanced sizes. The null-hypothesis arm ($\delta = 0$)
+repeats 14 of the 16 alternative cells. It omits only the
+moderate-variance imbalanced cells. It includes the six
+interaction cells. These allow us to assess the Type I error of
+the random-slopes model.
+
+The true treatment effect is $\delta = 0.30$ in the alternative
+scenarios. This is 0.30 standard deviations of the residual
+error ($\sigma_e = 1$). The total outcome SD is larger when
+$\sigma^2_\alpha > 0$. For example, it is
+$\sqrt{1.5} \approx 1.22$ when $\sigma^2_\alpha = 0.50$.
 
 ## Analytic methods
 
-We analyze each simulated dataset by three primary methods,
-plus a fourth method fit on every replicate for a paired
-comparison. That fourth method is reported only for the
-treatment-by-site-interaction scenarios (Results, "Random
-slopes under treatment-by-site interaction"):
+We analyze each simulated dataset by three primary methods.
+A fourth method is also fit on every replicate, for a paired
+comparison. We report it for the interaction scenarios and
+their null counterparts (Results, "Random slopes under
+treatment-by-site interaction"):
 
 1. **Ignore site:** $Y_{ij} = \beta_0 + \beta_1 T_{ij} + e_{ij}$
    (ordinary least squares, no site term)
@@ -494,7 +554,7 @@ slopes under treatment-by-site interaction"):
 3. **Random site effects:**
    $Y_{ij} = \beta_0 + \beta_1 T_{ij} + u_i + e_{ij}$
    where $u_i \sim N(0, \sigma^2_u)$ (linear mixed model
-   via REML, fit with \texttt{lme4})
+   via REML)
 4. **Random slopes:**
    $Y_{ij} = \beta_0 + \beta_1 T_{ij} + u_i + v_i T_{ij} + e_{ij}$
    where $(u_i, v_i)$ jointly follow a bivariate normal
@@ -510,47 +570,14 @@ slopes under treatment-by-site interaction"):
 ```{r sim-run, cache=TRUE, cache.extra=tools::md5sum(here::here("analysis/scripts/sim_multicenter.R"))}
 source(here::here("analysis/scripts/sim_multicenter.R"))
 
-scenarios <- tibble::tribble(
-  ~label, ~n_sites, ~n_per_site, ~balanced,
-  ~sigma_site, ~sigma_trt_site, ~true_trt, ~sigma_e,
-  "K10_noVar_bal",     10, 20, TRUE,  0.0, 0.0, 0.3, 1,
-  "K10_modVar_bal",    10, 20, TRUE,  sqrt(0.10), 0.0, 0.3, 1,
-  "K10_hiVar_bal",     10, 20, TRUE,  sqrt(0.50), 0.0, 0.3, 1,
-  "K10_modVar_imbal",  10, 20, FALSE, sqrt(0.10), 0.0, 0.3, 1,
-  "K10_hiVar_imbal",   10, 20, FALSE, sqrt(0.50), 0.0, 0.3, 1,
-  "K10_modVar_int",    10, 20, TRUE,  sqrt(0.10), 0.2, 0.3, 1,
-  "K10_hiVar_int",     10, 20, TRUE,  sqrt(0.50), 0.2, 0.3, 1,
-  "K10_hiVar_int_imb", 10, 20, FALSE, sqrt(0.50), 0.2, 0.3, 1,
-  "K30_noVar_bal",     30, 20, TRUE,  0.0, 0.0, 0.3, 1,
-  "K30_modVar_bal",    30, 20, TRUE,  sqrt(0.10), 0.0, 0.3, 1,
-  "K30_hiVar_bal",     30, 20, TRUE,  sqrt(0.50), 0.0, 0.3, 1,
-  "K30_modVar_imbal",  30, 20, FALSE, sqrt(0.10), 0.0, 0.3, 1,
-  "K30_hiVar_imbal",   30, 20, FALSE, sqrt(0.50), 0.0, 0.3, 1,
-  "K30_modVar_int",    30, 20, TRUE,  sqrt(0.10), 0.2, 0.3, 1,
-  "K30_hiVar_int",     30, 20, TRUE,  sqrt(0.50), 0.2, 0.3, 1,
-  "K30_hiVar_int_imb", 30, 20, FALSE, sqrt(0.50), 0.2, 0.3, 1,
-  # Null-hypothesis arm (true_trt = 0): a reduced factorial subset
-  # of the eight alternative-hypothesis conditions above (dropping
-  # the treatment-by-site-interaction rows, since sigma_trt_site
-  # has no bearing on size when the average effect is null and
-  # dropping them keeps the added runtime modest), needed to
-  # estimate empirical Type I error rather than only coverage of a
-  # CI centered on a nonzero effect (see Results, "Type I error
-  # under the null").
-  "H0_K10_noVar_bal",    10, 20, TRUE,  0.0, 0.0, 0.0, 1,
-  "H0_K10_modVar_bal",   10, 20, TRUE,  sqrt(0.10), 0.0, 0.0, 1,
-  "H0_K10_hiVar_bal",    10, 20, TRUE,  sqrt(0.50), 0.0, 0.0, 1,
-  "H0_K10_hiVar_imbal",  10, 20, FALSE, sqrt(0.50), 0.0, 0.0, 1,
-  "H0_K30_noVar_bal",    30, 20, TRUE,  0.0, 0.0, 0.0, 1,
-  "H0_K30_modVar_bal",   30, 20, TRUE,  sqrt(0.10), 0.0, 0.0, 1,
-  "H0_K30_hiVar_bal",    30, 20, TRUE,  sqrt(0.50), 0.0, 0.0, 1,
-  "H0_K30_hiVar_imbal",  30, 20, FALSE, sqrt(0.50), 0.0, 0.0, 1
-)
+# The scenario grid lives in the script (build_scenarios()) so that
+# the tinytest suite can check it. The six null-arm interaction rows
+# are appended last, which leaves the RNG stream of the first 24
+# scenarios unchanged.
+scenarios <- build_scenarios()
 
-# Morris, White, and Crowther (2019) §4.1: pin RNGkind and set the
-# seed ONCE at the start of the program. `run_simulation()` no longer
-# accepts a `seed` argument; it consumes RNG state from the single
-# stream established here.
+# Morris, White, and Crowther (2019) 4.1: pin RNGkind and set the
+# seed ONCE; run_simulation() consumes RNG state from this stream.
 RNGkind("L'Ecuyer-CMRG")
 set.seed(20260310)
 
@@ -561,25 +588,14 @@ raw_results <- run_simulation(
   )
 )
 sim_summary <- summarize_simulation(raw_results)
+# The Methods text states Satterthwaite df; the naive-df fallback
+# never triggered in development and must not do so silently here.
+stopifnot(all(sim_summary$df_fallback_rate == 0))
 
-# The alternative-hypothesis scenarios (true_trt = 0.30) drive the
-# main results table and figures, as in the original design; the
-# null-hypothesis scenarios are reported separately (Results,
-# "Type I error under the null") because a CI's coverage of a
-# nonzero true effect is not the same quantity as the test's Type I
-# error rate under the null, and merging the two arms into one table
-# or one set of scenario-indexed figures would conflate them.
-#
-# `fit_methods()` now also fits a fourth method, "random_slope"
-# (Analytic methods), on every replicate for a paired comparison, but
-# it is excluded from these three objects (`method != "random_slope"`)
-# so it does not silently appear as an unlabeled row in Table 1 or the
-# bias/power/coverage figures, none of which were designed to display
-# a fourth method. It is reported separately and only for the
-# treatment-by-site-interaction scenarios, in
-# `sim_summary_slope_int` below (Results, "Random slopes under
-# treatment-by-site interaction"), since that is the only condition
-# under which it is the correctly specified model.
+# Alternative (true_trt = 0.30) and null (true_trt = 0) arms are
+# reported separately: coverage of a nonzero effect is not the same
+# quantity as Type I error. The random-slopes method is kept out of
+# Table 1, Table 2, and Figures 1 to 3, and is reported in Table 3.
 sim_summary_alt <- dplyr::filter(
   sim_summary, true_trt > 0, method != "random_slope"
 )
@@ -590,16 +606,17 @@ raw_results_alt <- dplyr::filter(
   raw_results, true_trt > 0, method != "random_slope"
 )
 
-# Random-slopes comparison, scoped to the treatment-by-site-
-# interaction scenarios (scenario label contains "_int"), the only
-# scenarios where sigma_trt_site > 0 and a random slope is the
-# correctly specified model. `random_site` (intercept-only) is
-# included alongside `random_slope` for direct comparison on the same
-# data.
+# Random intercept versus random slopes, in the interaction
+# scenarios (sigma_trt_site > 0) under the alternative and the null.
+int_labels <- scenarios$label[scenarios$sigma_trt_site > 0]
 sim_summary_slope_int <- dplyr::filter(
   sim_summary,
-  true_trt > 0,
-  grepl("_int", scenario),
+  scenario %in% int_labels, true_trt > 0,
+  method %in% c("random_site", "random_slope")
+)
+sim_summary_slope_null <- dplyr::filter(
+  sim_summary,
+  scenario %in% int_labels, true_trt == 0,
   method %in% c("random_site", "random_slope")
 )
 ```
@@ -607,91 +624,98 @@ sim_summary_slope_int <- dplyr::filter(
 We replicate each scenario $R = 1{,}500$ times. The Monte Carlo
 SE of an estimated coverage or Type I error probability $p$ is
 $\text{MCSE} = \sqrt{p(1-p)/R}$ (Morris, White, and Crowther
-2019, Table 6). Evaluated at the nominal $p = 0.95$, the worst
-case among the coverage targets considered here, $R \geq
-1{,}320$ is required for MCSE $\leq 0.6$ percentage points. We
-note that $R = 1{,}500$ gives MCSE $\approx 0.56$ pp, satisfying
-the target with a margin. Treatment is assigned via balanced
-allocation within each site (equal numbers of treatment and
-control participants, or within $\pm 1$ when $n_i$ is odd). All
-random number generation uses a fixed seed
-(\texttt{set.seed(20260310)}) and the \texttt{L'Ecuyer-CMRG} RNG
-for reproducibility. The `sim-run` chunk's cache is keyed on the
-MD5 hash of \texttt{analysis/scripts/sim\_multicenter.R}, in
-addition to the chunk's own text. This way, a change to the
-simulation functions themselves, not just to this chunk,
-correctly invalidates the cached result, rather than silently
-reusing output from a prior version of the simulation code.
+2019, Table 6). We evaluate this at the nominal $p = 0.95$.
+This is the worst case among the coverage targets considered
+here. At that value, $R \geq 1{,}320$ is required for MCSE
+$\leq 0.6$ percentage points. We note that $R = 1{,}500$ gives
+MCSE $\approx 0.56$ pp. This meets the target with a margin.
+Treatment is assigned by balanced allocation within each site.
+That is, each site has equal numbers of treatment and control
+participants, or numbers within $\pm 1$ when $n_i$ is odd.
+All random number generation uses a fixed seed
+(\texttt{set.seed(20260310)}) and the \texttt{L'Ecuyer-CMRG}
+RNG for reproducibility. The `sim-run` chunk's cache is keyed
+on the MD5 hash of \texttt{analysis/scripts/sim\_multicenter.R},
+in addition to the chunk's own text. This means that a change
+to the simulation functions themselves, not just to this
+chunk, correctly invalidates the cached result. The cache
+cannot silently reuse output from a prior version of the
+simulation code.
 
 # Results
 
 ## Headline findings
 
 ```{r headline-07, include=FALSE}
-# Pull key numbers from the in-memory `sim_summary_alt` /
-# `sim_summary_null` produced by the `sim-run` chunk above. If the
-# sim has not run (e.g., cache invalid), these computations will
-# fail at knit time.
+# Key numbers for the prose, read from the `sim-run` objects.
 hl_random <- sim_summary_alt |>
   dplyr::filter(method == "random_site") |>
   dplyr::summarise(
     power_min = min(power), power_max = max(power),
-    cov_min = min(coverage), cov_max = max(coverage),
-    bias_abs_max = max(abs(bias)),
-    singular_max = max(singular_rate)
+    cov_min = min(coverage), cov_max = max(coverage)
   )
+hl_bias <- max(abs(sim_summary_alt$bias))
 hl_ignore <- sim_summary_alt |>
   dplyr::filter(method == "ignore_site") |>
   dplyr::summarise(
     cov_min = min(coverage), cov_max = max(coverage),
     power_min = min(power)
   )
-hl_conv <- sim_summary_alt |>
-  dplyr::summarise(conv_min = min(convergence_rate))
-hl_t1 <- sim_summary_null |>
-  dplyr::group_by(method) |>
+hl_fr <- sim_summary_alt |>
+  dplyr::filter(method %in% c("fixed_site", "random_site")) |>
+  dplyr::select(scenario, method, power, coverage, mcse_power) |>
+  tidyr::pivot_wider(
+    names_from = method, values_from = c(power, coverage, mcse_power)
+  ) |>
   dplyr::summarise(
-    t1_min = min(power), t1_max = max(power), .groups = "drop"
+    d_power = max(abs(power_random_site - power_fixed_site)),
+    d_cov = max(abs(coverage_random_site - coverage_fixed_site))
   )
-hl_t1_random <- dplyr::filter(hl_t1, method == "random_site")
-hl_t1_ignore <- dplyr::filter(hl_t1, method == "ignore_site")
+hl_conv <- min(sim_summary$convergence_rate)
+hl_sing <- sim_summary_alt |>
+  dplyr::filter(method == "random_site") |>
+  dplyr::mutate(novar = grepl("noVar", scenario)) |>
+  dplyr::summarise(
+    novar_min = min(singular_rate[novar]),
+    novar_max = max(singular_rate[novar]),
+    other_max = max(singular_rate[!novar])
+  )
 ```
 
-We observe that across `r nrow(sim_summary_alt) / 3`
-alternative-hypothesis scenarios ($\delta = 0.30$) and
-$R = 1{,}500$ replications per scenario, the random-site mixed
-model attained power between
-`r sprintf('%.2f', hl_random$power_min)` and
-`r sprintf('%.2f', hl_random$power_max)`. Coverage of the
+We observe the following across the
+`r nrow(sim_summary_alt) / 3` alternative-hypothesis scenarios
+($\delta = 0.30$), each with $R = 1{,}500$ replications. Table 1
+gives the Morris Table 6 Monte Carlo SEs in parentheses next to
+the power and coverage estimates. The random-site mixed model
+attained power between `r sprintf('%.2f', hl_random$power_min)`
+and `r sprintf('%.2f', hl_random$power_max)`. Coverage of its
 95\% confidence interval ranged from
 `r sprintf('%.3f', hl_random$cov_min)` to
-`r sprintf('%.3f', hl_random$cov_max)`, and absolute bias
-never exceeded `r sprintf('%.3f', hl_random$bias_abs_max)`
-(Morris Table 6 Monte Carlo SEs are given in parentheses next
-to the power and coverage point estimates in Table 1). The
-fixed-site estimator closely tracked the random-site
-estimator. Ignoring site entirely produced overcoverage (up to
-`r sprintf('%.3f', hl_ignore$cov_max)`) and correspondingly
-lower power (as low as `r sprintf('%.2f', hl_ignore$power_min)`)
-in scenarios with non-trivial between-site variance. The
-lowest convergence rate (hard \texttt{lmer} errors only)
-observed across any scenario or method was
-`r sprintf('%.3f', hl_conv$conv_min)`. However, the
-random-site model's *singular/boundary* fit rate reached as
-high as `r sprintf('%.3f', hl_random$singular_max)` in the
-low- and no-site-variance scenarios, where the true
-random-intercept variance is at or near the parameter-space
-boundary. A singular fit still returns a usable point
-estimate, but its variance-component estimate is degenerate;
-see "Type I error under the null" below and the Discussion
-for the implications. Under the null-hypothesis scenarios
-($\delta = 0$; Table 2), the empirical Type I error rate for
-the random-site method ranged from
-`r sprintf('%.3f', hl_t1_random$t1_min)` to
-`r sprintf('%.3f', hl_t1_random$t1_max)`, and for the
-ignore-site method from `r sprintf('%.3f', hl_t1_ignore$t1_min)`
-to `r sprintf('%.3f', hl_t1_ignore$t1_max)`, against a
-nominal $\alpha = 0.05$.
+`r sprintf('%.3f', hl_random$cov_max)`. Absolute bias never
+exceeded `r sprintf('%.3f', hl_bias)` for any method.
+
+The fixed-site and random-site models were indistinguishable in
+this grid. Their power differed by at most
+`r sprintf('%.3f', hl_fr$d_power)` in any scenario. Their
+coverage differed by at most `r sprintf('%.3f', hl_fr$d_cov)`.
+This agreement follows from the design, as the Discussion
+explains. Ignoring site produced overcoverage, up to
+`r sprintf('%.3f', hl_ignore$cov_max)`. It also produced lower
+power, as low as `r sprintf('%.2f', hl_ignore$power_min)`. Both
+effects occurred when the site variance was non-zero.
+
+The lowest convergence rate across all scenarios and methods
+was `r sprintf('%.3f', hl_conv)`. This rate counts hard
+\texttt{lmer} errors only. Singular fits are a separate matter.
+With zero true site variance, the random-site model
+returned a singular fit in
+`r sprintf('%.1f', 100 * hl_sing$novar_min)` to
+`r sprintf('%.1f', 100 * hl_sing$novar_max)`\% of replicates.
+With positive site variance, the rate was at most
+`r sprintf('%.1f', 100 * hl_sing$other_max)`\%. A singular fit
+still returns a usable point estimate. However, its
+variance-component estimate is degenerate. Type I error under
+the null is reported in Table 2.
 
 ## Summary of performance metrics
 
@@ -704,8 +728,10 @@ sim_display <- sim_summary_alt |>
       method == "fixed_site" ~ "Fixed",
       method == "random_site" ~ "Random"
     ),
-    convergence = sprintf("%.1f\\%%", 100 * n_converged / n_total),
-    singular = sprintf("%.1f\\%%", 100 * singular_rate),
+    singular = ifelse(
+      method == "Random", sprintf("%.1f\\%%", 100 * singular_rate),
+      "--"
+    ),
     power_mcse = sprintf("%.3f (%.3f)", power, mcse_power),
     coverage_mcse = sprintf("%.3f (%.3f)", coverage, mcse_coverage)
   ) |>
@@ -714,7 +740,7 @@ sim_display <- sim_summary_alt |>
     Bias = bias, `Emp. SE` = empirical_se,
     `Model SE` = mean_model_se,
     `Power (MCSE)` = power_mcse, `Coverage (MCSE)` = coverage_mcse,
-    Conv. = convergence, Sing. = singular
+    Sing. = singular
   )
 
 kable(
@@ -727,10 +753,9 @@ kable(
     ($\\delta = 0.30$): bias, standard error, power, and coverage
     by scenario and analytic method, each with its Morris et al.
     (2019) Table 6 Monte Carlo SE in parentheses where applicable.
-    R = 1500 replications per scenario. `Conv.' is the rate of
-    successful \\texttt{lmer} fits (errors only); `Sing.' is the
+    R = 1500 replications per scenario. `Sing.' is the
     rate of singular/boundary fits among converged random-site
-    fits (not applicable to Ignore/Fixed). Type I error results
+    fits (-- = not applicable). Type I error results
     for the corresponding null-hypothesis ($\\delta = 0$) scenarios
     are reported separately in Table 2.",
   linesep = ""
@@ -769,12 +794,12 @@ sim_summary_alt |>
        shape = "Method", linetype = "Method") +
   theme_minimal(base_size = 10) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1,
-                                   size = 6))
+                                   size = 7))
 ```
 
 ## Power and coverage
 
-```{r fig-power, fig.cap="Power (left) and coverage probability (right) across scenarios. Dashed line indicates the 95\\% coverage target (right panel).", fig.width=6, fig.height=3.5}
+```{r fig-power, fig.cap="Power (left) and coverage probability (right) across scenarios. Dashed line indicates the 95\\% coverage target (right panel).", fig.width=6.5, fig.height=4}
 p_data <- sim_summary_alt |>
   mutate(
     method = factor(method,
@@ -800,7 +825,7 @@ p1 <- p_data |>
        shape = "Method", linetype = "Method") +
   theme_minimal(base_size = 9) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1,
-                                   size = 5))
+                                   size = 7))
 
 p2 <- p_data |>
   ggplot(aes(x = scenario_short, y = coverage,
@@ -818,7 +843,7 @@ p2 <- p_data |>
        shape = "Method", linetype = "Method") +
   theme_minimal(base_size = 9) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1,
-                                   size = 5))
+                                   size = 7))
 
 gridExtra::grid.arrange(p1, p2, ncol = 2)
 ```
@@ -826,25 +851,31 @@ gridExtra::grid.arrange(p1, p2, ncol = 2)
 ## Impact of imbalanced site sizes
 
 ```{r fig-imbalance, fig.cap="Comparison of balanced versus imbalanced site sizes for the random effects method. Panels show empirical standard error (left) and power (right).", fig.width=5.5, fig.height=3}
+# Balance status comes from the scenario table, not a label regex
+# ('imbal' ends in 'bal'); see pair_balance_scenarios().
+bal_pairs <- pair_balance_scenarios(scenarios)
 bal_data <- raw_results_alt |>
   filter(method == "random_site", !is.na(est)) |>
-  mutate(
-    balanced = case_when(
-      grepl("bal$", scenario) ~ "Balanced",
-      grepl("imbal$|imb$", scenario) ~ "Imbalanced",
-      TRUE ~ NA_character_
-    ),
-    base = str_remove(scenario, "_bal$|_imbal$|_imb$"),
-    k = ifelse(grepl("K10", scenario), "K = 10", "K = 30")
-  ) |>
-  filter(!is.na(balanced))
+  inner_join(bal_pairs, by = "scenario") |>
+  rename(balanced = balance)
+stopifnot(
+  all(table(unique(bal_data[c("base", "balanced")])$base) == 2)
+)
 
 bal_summary <- bal_data |>
-  group_by(base, k, balanced) |>
+  group_by(base, balanced) |>
   summarize(
     emp_se = sd(est),
     power = mean(pval < 0.05),
     .groups = "drop"
+  )
+bal_diff <- bal_summary |>
+  tidyr::pivot_wider(names_from = balanced,
+                     values_from = c(emp_se, power)) |>
+  mutate(
+    int = grepl("_int", base),
+    d_se = emp_se_Imbalanced - emp_se_Balanced,
+    d_power = power_Imbalanced - power_Balanced
   )
 
 p3 <- bal_summary |>
@@ -855,7 +886,7 @@ p3 <- bal_summary |>
   labs(x = NULL, y = "Empirical SE", fill = NULL) +
   theme_minimal(base_size = 9) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1,
-                                   size = 6))
+                                   size = 7))
 
 p4 <- bal_summary |>
   ggplot(aes(x = base, y = power,
@@ -865,7 +896,7 @@ p4 <- bal_summary |>
   labs(x = NULL, y = "Power", fill = NULL) +
   theme_minimal(base_size = 9) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1,
-                                   size = 6))
+                                   size = 7))
 
 gridExtra::grid.arrange(p3, p4, ncol = 2)
 ```
@@ -873,15 +904,16 @@ gridExtra::grid.arrange(p3, p4, ncol = 2)
 ## Type I error under the null
 
 Coverage of a 95\% CI centered on the true alternative
-($\delta = 0.30$, Table 1) is not the same quantity as the
-Type I error rate of the associated test under a true null
-effect ($\delta = 0$). We note that Type I error is the
-quantity most directly relevant to the stratified-
-randomization literature motivating this study
+($\delta = 0.30$, Table 1) is one quantity. The Type I error
+rate of the associated test under a true null effect
+($\delta = 0$) is a different one. We note that Type I error
+is the quantity most directly relevant to the stratified-
+randomization literature that motivates this study
 [@kahanImproperAnalysisTrials2012a;
 @kahanAdjustingMultiplePrognostic2013]. Table 2 reports the
-empirical rejection rate at $\alpha = 0.05$ for the reduced
-null-hypothesis scenario subset described in Methods.
+empirical rejection rate at $\alpha = 0.05$. It covers the 14
+null-hypothesis scenarios described in Methods, including the
+six with treatment-by-site interaction.
 
 ```{r results-table-null}
 sim_display_null <- sim_summary_null |>
@@ -895,7 +927,10 @@ sim_display_null <- sim_summary_null |>
     ),
     t1_mcse = sprintf("%.3f (%.3f)", power, mcse_power),
     coverage_mcse = sprintf("%.3f (%.3f)", coverage, mcse_coverage),
-    singular = sprintf("%.1f\\%%", 100 * singular_rate)
+    singular = ifelse(
+      method == "Random", sprintf("%.1f\\%%", 100 * singular_rate),
+      "--"
+    )
   ) |>
   select(
     Scenario = scenario, Method = method,
@@ -923,40 +958,89 @@ kable(
   )
 ```
 
-All three methods maintain Type I error close to the nominal
-5\% level across the null-hypothesis scenarios. This holds
-including the high-site-variance and imbalanced conditions,
-and including the scenarios in which the random-site model's
-singular-fit rate is highest. This finding is consistent with
-the alternative-hypothesis coverage results in Table 1, and it
-provides direct evidence, rather than an inference from
-coverage of a shifted CI, that none of the three methods
-inflates the false-positive rate under the conditions
-simulated here. It does not, by itself, establish that the
-$t$-based reference distribution used for the random-site
-method (Methods, "Analytic methods") is correctly calibrated
-in general. The boundary/singular fits flagged in Table 1 and
-Table 2 return a point estimate and standard error that are
-numerically valid, but whose sampling distribution at the
-parameter-space boundary is not guaranteed to match the naive
-$t$ approximation used here. This simulation's null-arm
-results should not be read as validating that approximation
-outside the specific scenarios simulated.
+```{r t1-summary, include=FALSE}
+t1 <- sim_summary_null |>
+  dplyr::mutate(
+    int = scenario %in% int_labels,
+    z = (power - 0.05) / mcse_power
+  )
+t1_fr <- dplyr::filter(t1, method != "ignore_site")
+t1_ig <- dplyr::filter(t1, method == "ignore_site")
+t1_exc <- dplyr::filter(t1_fr, !int, z > 2)
+t1_exc_cells <- unique(str_replace_all(
+  str_remove(t1_exc$scenario, "^H0_"), "_", " "
+))
+t1_slope <- dplyr::filter(sim_summary_slope_null,
+                          method == "random_slope")
+cond_fixed <- dplyr::filter(
+  sim_summary, scenario %in% int_labels, method == "fixed_site"
+)
+fmt_rng <- function(x, d = 3) {
+  paste(sprintf(paste0("%.", d, "f"), range(x)), collapse = " to ")
+}
+```
+
+Consider first the null scenarios without interaction. There
+the fixed-site and random-site tests had Type I error from
+`r fmt_rng(t1_fr$power[!t1_fr$int])`. Ignoring site gave rates
+from `r fmt_rng(t1_ig$power[!t1_ig$int])`. With site variance
+present, these were up to
+`r sprintf('%.0f', max(-t1_ig$z[!t1_ig$int]))` MCSEs below the
+nominal 5\%. That is, ignoring site was markedly conservative.
+This agrees with Kahan and Morris
+[@kahanImproperAnalysisTrials2012a] and with Bugni and
+colleagues [@bugni2018inference]. One cell stands out. In
+`r paste(t1_exc_cells, collapse = ', ')`, the fixed-site and
+random-site rates were
+`r paste(sprintf('%.3f', t1_exc$power), collapse = ' and ')`.
+These are about
+`r sprintf('%.1f', min(t1_exc$z))` to
+`r sprintf('%.1f', max(t1_exc$z))` MCSEs above nominal. The two
+methods give nearly the same estimate on the same data. Their
+excursions are therefore one event, not two. Among 16 such
+comparisons one excursion of this size is not surprising. We
+did not increase $R$ for this cell.
+
+The null scenarios with interaction behave differently. There
+the fixed-site and random-intercept tests rejected in
+`r fmt_rng(t1_fr$power[t1_fr$int])` of replicates. Both models
+omit the random slope. Their standard errors therefore do not
+include the between-site variance of the treatment effect. As a
+result, they are anti-conservative for $\delta$. This is partly
+a question of estimand (Methods, "ADEMP structure"). Against its
+own conditional target, the fixed-site interval covered in
+`r fmt_rng(cond_fixed$coverage_cond)` of replicates, across all
+twelve interaction scenarios. The random-slopes test had Type
+I error from `r fmt_rng(t1_slope$power)`. Ignoring site gave
+`r fmt_rng(t1_ig$power[t1_ig$int])`.
+
+These results are specific to the scenarios simulated. The
+random-site and random-slopes tests use a $t$ reference with
+Satterthwaite df. A singular fit returns a valid estimate and
+standard error. Unfortunately, its sampling distribution at the
+boundary need not match that $t$ approximation.
 
 ## Random slopes under treatment-by-site interaction
 
 The random-site method fitted throughout this report (Table 1,
-Table 2) includes only a random intercept. This is misspecified
-for the six treatment-by-site-interaction scenarios
-($\sigma^2_{\gamma} = 0.04$), since those scenarios are
+Table 2) includes only a random intercept. This model is
+misspecified for the six treatment-by-site-interaction
+scenarios ($\sigma^2_{\gamma} = 0.04$). Those scenarios are
 generated with a genuine random treatment slope, $\gamma_i$
-(Data generating model). Table 3 compares that intercept-only
-specification against the correctly specified random-slopes
-method (Analytic methods, Method 4), fit on the same generated
-data and restricted to those six scenarios.
+(Data generating model). Table 3 compares the intercept-only
+specification with the correctly specified random-slopes
+method (Analytic methods, Method 4). Both are fit on the same
+generated data. The comparison is restricted to those six
+scenarios and their null counterparts.
 
 ```{r results-table-slope}
+slope_t1 <- sim_summary_slope_null |>
+  transmute(
+    scenario = str_remove(scenario, "^H0_"), method,
+    t1_mcse = sprintf("%.3f (%.3f)", power, mcse_power)
+  )
 sim_display_slope <- sim_summary_slope_int |>
+  left_join(slope_t1, by = c("scenario", "method")) |>
   mutate(
     scenario = str_replace_all(scenario, "_", " "),
     method = case_when(
@@ -970,7 +1054,10 @@ sim_display_slope <- sim_summary_slope_int |>
   select(
     Scenario = scenario, Method = method,
     Bias = bias, `Emp. SE` = empirical_se,
+    `Model SE` = mean_model_se,
     `Power (MCSE)` = power_mcse, `Coverage (MCSE)` = coverage_mcse,
+    `Cov. ($K-1$ df)` = coverage_km1,
+    `Type I (MCSE)` = t1_mcse,
     Sing. = singular
   )
 
@@ -982,12 +1069,14 @@ kable(
   escape = FALSE,
   caption = "Random intercept versus random slopes for the six
     treatment-by-site-interaction scenarios ($\\sigma^2_{\\gamma} =
-    0.04$), fit on the same generated data. `Sing.' is the
-    singular/boundary-fit rate among converged fits for that method;
-    for Random slope this reflects the joint intercept-slope
-    covariance parameter space, a higher-dimensional boundary than
-    the single-variance-component boundary tracked for Random
-    intercept.",
+    0.04$), fit on the same generated data. Power, coverage, and
+    Type I error use Satterthwaite df. `Cov. ($K-1$ df)' repeats
+    the coverage calculation with $K - 1$ df. `Type I' is the
+    rejection rate in the matching null scenario ($\\delta = 0$,
+    same $\\sigma^2_{\\gamma}$). `Sing.' is the singular-fit rate
+    among converged fits for that method; for Random slope it
+    refers to the joint intercept-slope covariance parameter
+    space.",
   linesep = ""
 ) |>
   kable_styling(
@@ -998,251 +1087,269 @@ kable(
 
 ```{r slope-headline, include=FALSE}
 sl_compare <- sim_summary_slope_int |>
-  select(scenario, method, bias, empirical_se, power, coverage,
-         singular_rate) |>
+  select(scenario, method, power, coverage, mean_model_se,
+         mean_df) |>
   tidyr::pivot_wider(
     names_from = method,
-    values_from = c(bias, empirical_se, power, coverage, singular_rate)
+    values_from = c(power, coverage, mean_model_se, mean_df)
   )
 sl_cov_gain <- sl_compare$coverage_random_slope -
   sl_compare$coverage_random_site
+sl_pow_loss <- sl_compare$power_random_site -
+  sl_compare$power_random_slope
+sl_k10 <- grepl("^K10", sl_compare$scenario)
+sl_slope <- dplyr::filter(sim_summary_slope_int,
+                          method == "random_slope")
+sl_sing <- raw_results |>
+  dplyr::filter(method == "random_slope",
+                scenario %in% sim_summary_slope_int$scenario,
+                !is.na(est)) |>
+  dplyr::mutate(
+    cover = abs(est - true_trt) <= stats::qt(0.975, df) * se
+  ) |>
+  dplyr::group_by(scenario, singular) |>
+  dplyr::summarise(mdf = mean(df), cov = mean(cover),
+                   .groups = "drop")
 ```
 
-Across these six scenarios, the random-slopes method's coverage
-was consistently higher than the (misspecified) random-intercept
-method's coverage, by
-`r sprintf('%+.1f', 100 * min(sl_cov_gain))` to
+Table 3 shows both sides of a trade-off. On the plus side, the
+random-slopes model had higher coverage than the misspecified
+random-intercept model in all six scenarios. The gain ranged
+from `r sprintf('%+.1f', 100 * min(sl_cov_gain))` to
 `r sprintf('%+.1f', 100 * max(sl_cov_gain))` percentage points.
-Its singular-fit rate was
-`r sprintf('%.1f', 100 * min(dplyr::filter(sim_summary_slope_int, method == "random_slope")$singular_rate))`
-to
-`r sprintf('%.1f', 100 * max(dplyr::filter(sim_summary_slope_int, method == "random_slope")$singular_rate))`\%,
-reflecting the additional variance and covariance parameters
-the random-slopes model must estimate relative to the
-random-intercept model. See the Discussion, "Treatment-by-site
-interaction," for interpretation.
+On the minus side, its power was lower in every scenario. The
+loss ranged from `r sprintf('%.1f', 100 * min(sl_pow_loss))` to
+`r sprintf('%.1f', 100 * max(sl_pow_loss))` points. It was
+largest at $K = 10$. There it was at least
+`r sprintf('%.1f', 100 * min(sl_pow_loss[sl_k10]))` points. Two
+things widen the random-slopes interval. Its mean model SE was
+larger. Its mean Satterthwaite df were also much smaller, from
+`r sprintf('%.0f', min(sl_compare$mean_df_random_slope[sl_k10]))`
+to `r sprintf('%.0f', max(sl_compare$mean_df_random_slope[sl_k10]))`
+at $K = 10$.
+
+The random-slopes model returned a singular fit in
+`r sprintf('%.1f', 100 * min(sl_slope$singular_rate))` to
+`r sprintf('%.1f', 100 * max(sl_slope$singular_rate))`\% of
+replicates. Its df depend strongly on singularity. Non-singular
+fits had mean df of `r fmt_rng(sl_sing$mdf[!sl_sing$singular], 0)`. Singular fits
+had mean df of `r fmt_rng(sl_sing$mdf[sl_sing$singular], 0)`.
+Singular fits also had smaller model SEs. Both features make
+their intervals narrower. Coverage among singular fits was
+`r fmt_rng(sl_sing$cov[sl_sing$singular])`. Among non-singular
+fits it was `r fmt_rng(sl_sing$cov[!sl_sing$singular])`. With
+$K - 1$ df, overall coverage was
+`r fmt_rng(sl_slope$coverage_km1)`. Under the null, the
+random-slopes test had Type I error of
+`r fmt_rng(t1_slope$power)` (Table 3). The Discussion,
+"Treatment-by-site interaction," takes up the interpretation.
 
 # Discussion
 
 We organize the simulation results around the four research
-questions motivating this study.
+questions that motivate this study.
 
-**Modeling site effects.** Consistent with prior simulation
-work [@chu2011comparing; @kahanmorris2013continuous], we find
-that the random effects model attained nominal or near-
-nominal coverage and the highest power across nearly all
-scenarios. The fixed effects model performed comparably when
-the number of sites was small ($K = 10$), but it lost
-efficiency with $K = 30$ due to the large number of nuisance
-parameters. Ignoring site effects produced unbiased point
-estimates, but it inflated standard errors when site-level
-variance was present, leading to conservative inference and
-reduced power. These findings support the random effects
-model as a robust default for multicenter RCTs, as recommended
-in the literature [@sennlewis2019treatment; @iche9]. We note a
-caveat that attaches specifically to the no- and
-low-site-variance scenarios: the random-intercept model's
-variance component is frequently estimated at the
-parameter-space boundary there, with singular/boundary fit
-rates up to `r sprintf('%.1f', 100 * hl_random$singular_max)`\%
-(Table 1). This is expected behavior for REML at a near-zero
-true variance component, but it means the reported coverage
-and power for the random-site method in those scenarios
-reflect a mix of interior and boundary solutions, rather than
-a uniformly well-behaved asymptotic regime.
+**Modeling site effects.** Our findings agree with prior
+simulation work [@chu2011comparing; @kahanmorris2013continuous;
+@islam2024accounting]. The fixed-site and random-site models
+were indistinguishable throughout our grid. Their power differed
+by at most `r sprintf('%.3f', hl_fr$d_power)` in any scenario.
+This is expected from the design. Every site had about 20
+patients, with treatment balanced within site. Treatment is then
+nearly orthogonal to site. The fixed model loses only $K - 1$
+of about 200 or 600 residual df. In addition, the GLS and OLS
+estimators nearly coincide. Our grid therefore cannot show when
+one model should be preferred to the other. Earlier work locates
+the differences in small centers, many sites relative to $N$,
+and low ICC [@pickering2007analysis;
+@kahanmorris2013continuous]. None of these regimes was
+simulated here. With zero true site variance, the
+random-intercept fit was singular in up to
+`r sprintf('%.1f', 100 * hl_sing$novar_max)`\% of replicates.
+This is expected for REML at a zero variance component. It did
+not affect power or coverage in these scenarios.
 
-A further methodological caveat applies to how this
-recommendation is justified, not to the simulation's findings
-themselves. The recommendation rests on a design-based
-argument that requires no claim about hospitals being a
-literal random sample of a larger population. This is the
-more defensible of two justifications the published
-literature offers for this choice; see Introduction, "Two
-different reasons statisticians give for treating site as
-random," for the full discussion and citations.
+A further caveat concerns how a random site effect is
+justified. It does not concern the simulation's findings. The
+design-based argument requires no claim that hospitals are a
+random sample of a larger population. In our view it is the
+more defensible of the two justifications in the literature.
+The full discussion is in the Introduction, "Two different
+reasons statisticians give for treating site as random." We
+note that ICH E9 does not recommend random site intercepts for
+the primary analysis. It mentions mixed models only as a tool
+to explore heterogeneity [@iche9, Section 3.2].
 
 **Failure to adjust for stratification.** The 'ignore site'
-method effectively represents a failure to adjust for the
-stratification variable (site) used in randomization. The
-overcoverage and power loss observed under this method
-confirm the findings of Kahan and Morris
-[@kahanImproperAnalysisTrials2012a]: when randomization is
-stratified by center, the analysis must account for center to
-obtain valid inference. The magnitude of the power penalty
-depends on the ICC. With no site-level variance, ignoring
-site is harmless, but as $\sigma^2_{\alpha}$ increases, the
-penalty becomes substantial.
+method in effect represents a failure to adjust for the
+stratification variable (site) used in randomization. Under
+this method we observed overcoverage and a loss of power. Its
+Type I error was well below the nominal level when site
+variance was present (Table 2). These results confirm the
+findings of Kahan and Morris
+[@kahanImproperAnalysisTrials2012a]. That is, when
+randomization is stratified by center, the analysis should
+account for center. The size of the power penalty depends on
+the ICC. With no site-level variance, ignoring site is
+harmless. However, the penalty becomes substantial as
+$\sigma^2_{\alpha}$ increases.
 
-**Treatment-by-site interaction.** Introducing random
-treatment-by-site interaction ($\sigma^2_{\gamma} = 0.04$)
-increased the variability of treatment effect estimates
-across replications for all methods. The random-intercept
-model does not explicitly model this interaction in the
-fitted specification, and it undercovered somewhat in Table 1
-(as low as `r sprintf('%.3f', hl_random$cov_min)` against the
-95\% nominal target), because the inflated variability from
-the omitted slope was only partially absorbed into the
-residual. Table 3 (Results, "Random slopes under
-treatment-by-site interaction") reports what the correctly
-specified random-slopes model does differently on the same
-data. Coverage was higher in all six interaction scenarios, by
-`r sprintf('%+.1f', 100 * min(sl_cov_gain))` to
-`r sprintf('%+.1f', 100 * max(sl_cov_gain))` percentage points
-relative to the random-intercept model. This closes a real
-and consistent share of the coverage gap, rather than
-reflecting a shift within Monte Carlo noise. That correction
-comes at a substantial cost, however: the random-slopes
-model's singular-fit rate
-(`r sprintf('%.1f', 100 * min(dplyr::filter(sim_summary_slope_int, method == "random_slope")$singular_rate))`--`r sprintf('%.1f', 100 * max(dplyr::filter(sim_summary_slope_int, method == "random_slope")$singular_rate))`\%)
-was far higher than the random-intercept model's. This
-reflects how much harder the additional variance-covariance
-parameters are to estimate from a single trial's worth of
-data. Both facts matter for practice. A random-slopes model
-is not merely the theoretically correct choice under known
-treatment heterogeneity; it delivers a measurable coverage
-benefit in the scenarios simulated here. On the other hand,
-it also requires a researcher to expect and plan for a
-materially higher rate of boundary/singular fits than the
-simpler random-intercept model produces. Jones and colleagues
-and Fedorov and Jones have argued that some degree of
-treatment-by-center interaction is ubiquitous, and that the
-power to detect it is typically inadequate
-[@jones1998comparison; @fedorov2005misleading]. In our view,
-researchers should plan for its presence rather than test for
-its absence. Table 3's results suggest that such planning
-should weigh the random-slopes model's estimation difficulty
-against its real, non-trivial coverage benefit, and should not
-treat the choice as free in either direction, in a single
-trial's finite sample.
+**Treatment-by-site interaction.** Interaction with
+$\sigma^2_{\gamma} = 0.04$ raised the empirical SE of every
+method. The random-intercept model does not include the
+interaction. Its coverage fell as low as
+`r sprintf('%.3f', hl_random$cov_min)`. Its Type I error in the
+matching null scenarios rose to
+`r sprintf('%.3f', max(t1_fr$power[t1_fr$int]))`. This is
+partly a matter of estimand. The fixed-site and random-intercept
+models effectively target a weighted average of the effects in
+the sampled sites. Against that conditional target, the
+fixed-site interval covered at close to the nominal rate
+(`r fmt_rng(cond_fixed$coverage_cond)`). The shortfall is
+against $\delta$, the mean of the super-population of site
+effects. Which target is wanted is a design decision. It should
+be stated in advance, following ICH E9(R1) and Kahan and
+colleagues [@iche9r1; @kahan2023estimands].
 
-**Imbalanced site sizes.** The comparison of balanced versus
-imbalanced site sizes reveals that for the random effects
-model, moderate imbalance (CV $\approx 1.1$) produces only a
-modest increase in empirical standard error and a
-correspondingly small decrease in power. This finding is
-consistent with Ruvuna and with Vierron and Giraudeau, who
-showed that the efficiency loss from unequal site sizes is
-generally small unless the imbalance is extreme
-[@ruvuna2004unequal; @vierron2009design]. The more concerning
-scenario is when site size is confounded with site
-characteristics, a possibility not simulated here but
-discussed elsewhere [@fedorov2005misleading;
-@neuhaus2006separating]. Under informative site sizes, where
-larger sites systematically differ from smaller sites, all
-methods may produce biased estimates of the population-average
-treatment effect.
+Suppose $\delta$ is the target. Then the random-slopes model
+is the appropriate model. Table 3 shows its trade-off. On the one hand,
+it raised coverage by up to
+`r sprintf('%.1f', 100 * max(sl_cov_gain))` points. Its Type
+I error was below, or within Monte Carlo error of, the nominal
+level. On the other
+hand, it lost
+`r sprintf('%.1f', 100 * min(sl_pow_loss))` to
+`r sprintf('%.1f', 100 * max(sl_pow_loss))` points of power.
+The loss was largest with ten sites. It also returned singular
+fits in at least
+`r sprintf('%.1f', 100 * min(sl_slope$singular_rate))`\% of
+replicates. A singular fit had much larger Satterthwaite df and
+lower coverage than a non-singular one. Both halves of the
+trade-off matter for practice. Senn argued that some
+treatment-by-center interaction is inevitable
+[@senn1998controversies]. The power to detect it is typically
+low [@sennlewis2019treatment; @iche9]. In our view, researchers
+should therefore choose the target and model in advance. They
+should not rely on an interaction test.
+
+**Imbalanced site sizes.** We compared balanced and imbalanced
+site sizes for the random-intercept model (Figure 3). Without
+interaction, imbalance had no consistent effect. The empirical
+SE changed by at most
+`r sprintf('%.3f', max(abs(bal_diff$d_se[!bal_diff$int])))`.
+Power changed by
+`r sprintf('%+.1f', 100 * min(bal_diff$d_power[!bal_diff$int]))`
+to
+`r sprintf('%+.1f', 100 * max(bal_diff$d_power[!bal_diff$int]))`
+points, in both directions. This is consistent with Ruvuna and
+with Vierron and Giraudeau. They showed that the efficiency loss from unequal
+site sizes is small unless the imbalance is extreme
+[@ruvuna2004unequal; @vierron2009design]. With interaction,
+imbalance raised the empirical SE and lowered power. With
+unequal sizes, a few large sites dominate the estimate. Their
+realized interaction effects then average out less well. The more
+concerning case arises when site size is related to the site
+effect. This case is not simulated here. Under informative site
+sizes, the patient-weighted and site-weighted average effects
+differ [@kahan2023estimands; @neuhaus2006separating].
 
 **Limitations.** We should note that this simulation is
 restricted to continuous outcomes analyzed with normal-theory
 models. Binary and time-to-event outcomes raise additional
-complications, including separation in fixed effects logistic
+complications. One is separation in fixed effects logistic
 regression with many small sites
 [@kahanAccountingCentreeffectsMulticentre2014;
 @agresti2000strategies; @pickering2007analysis]. The
-simulation does not incorporate dropout, non-compliance, or
-informative site sizes. Table 1's primary comparison of
-site-modeling strategies still fits only a random intercept
-for the random-site method, by design, since that is the
-question those 16 scenarios address. A random-slopes model is
-now fit and compared against it, but only for the six
-treatment-by-site-interaction scenarios (Table 3), where it
-is the correctly specified model. The null-hypothesis (Type I
-error) arm covers a reduced subset of eight of the sixteen
-alternative-hypothesis scenarios, omitting the
-treatment-by-site-interaction conditions. Type I error under
-a null average effect combined with genuine site-level
-interaction variance, analyzed by the random-slopes model, is
-not assessed here and remains a natural extension of the null
-arm. The random-site and random-slope methods' $p$-values and
-CIs both use an $N$-minus-fixed-effects degrees of freedom
-that is not a Kenward-Roger or Satterthwaite correction
-(Methods, "Analytic methods"). The null-arm results in Table 2
-show this approximation was not anti-conservative for the
-random-site method in the scenarios simulated (the null arm
-does not cover the random-slope method, per the point above).
-Unfortunately, that is not a general guarantee, particularly
-for the boundary/singular fits discussed above and in Table 3.
+simulation does not include dropout, non-compliance, or
+informative site sizes. The grid keeps about 20 patients per
+site with balanced allocation. The ICC values of about 0.09 and
+0.33 are high for multicenter trials. As a result, the
+fixed-versus-random comparison is uninformative by
+construction. The random-slopes comparison covers only six
+scenarios and their null counterparts. The mixed models use
+Satterthwaite df. We did not evaluate Kenward-Roger df or
+methods for very few clusters [@kenward1997small;
+@mcneish2016modeling]. Unfortunately, no df method is
+guaranteed to be calibrated for singular fits.
 
 # Future research
 
 Several directions merit further investigation:
 
-1. **Random slopes models (partially addressed).** A random
-   treatment slope ($\delta + \gamma_i$ with $\gamma_i$
-   estimated) is now fit and compared against the
-   random-intercept model for the six treatment-by-site-
-   interaction scenarios (Results, "Random slopes under
-   treatment-by-site interaction"; Table 3). What remains is
-   to extend the null-hypothesis arm to cover interaction
-   scenarios analyzed by the random-slopes model, so that
-   Type I error, not only coverage and singular-fit rate, can
-   be assessed for that method, and to extend the
-   $K$/$\sigma^2_{\alpha}$/balance factorial grid used for the
-   random-intercept comparison to the random-slopes method as
-   well, rather than the current six-scenario subset.
+1. **Random slopes over a full grid.** Our random-slopes
+   comparison covers six interaction scenarios and their null
+   counterparts. A full factorial over $K$, $n_i$, the ICC, and
+   $\sigma^2_\gamma$ would map the trade-off among coverage,
+   power, and singular fits. We regard this as
+   the most open question in this area.
 
-2. **Non-normal outcomes.** Binary and count outcomes
-   require generalized linear mixed models or GEE, and
-   the relative performance of methods may differ from
-   the continuous case, particularly with sparse data per
-   site [@agresti2000strategies;
+2. **Small centers, many sites, and low ICC.** Our grid keeps
+   about 20 patients per site with balanced allocation. In this
+   regime fixed and random site models must nearly agree. The
+   methods differ in other regimes [@pickering2007analysis;
+   @kahanmorris2013continuous; @mcneish2016modeling]. These
+   include small centers ($n_i$ of 2 to 6) with simple
+   randomization, $K$ of 50 to 100, and ICC of 0.01 to 0.05.
+
+3. **Non-normal outcomes.** Binary and count outcomes
+   require generalized linear mixed models or GEE. The
+   relative performance of methods may differ from the
+   continuous case. This is particularly likely with sparse
+   data per site [@agresti2000strategies;
    @kahanAccountingCentreeffectsMulticentre2014].
 
-3. **Informative site sizes.** If site size is associated
-   with site-level treatment effect (e.g., expert centers
-   enroll more patients and also deliver more effective
-   treatment), standard methods may yield biased
-   population-average estimates. Inverse-probability
-   weighting by site or joint modeling of enrollment and
-   outcome merit investigation
+4. **Informative site sizes.** Site size may be associated
+   with the site-level treatment effect. For example, expert
+   centers may enroll more patients and also deliver more
+   effective treatment. In that case the patient-weighted and
+   site-weighted average effects differ. Standard mixed models
+   may then be biased for both [@kahan2023estimands].
+   Inverse-probability weighting by site, or joint modeling
+   of enrollment and outcome, merit investigation
    [@neuhaus2006separating].
 
-4. **Small-sample corrections.** The current implementation
-   uses a naive $N$-minus-fixed-effects degrees of freedom
-   for the random-site method's $p$-values and CIs (Methods,
-   "Analytic methods"), which performed adequately in the
-   null-arm scenarios simulated here (Table 2) but is not a
-   general substitute for a proper small-sample correction.
-   Kenward-Roger or Satterthwaite denominator degrees of
-   freedom corrections (available in \texttt{lmerTest})
-   should be substituted and evaluated across the same
-   scenario grid, particularly for the $K = 10$, high-
-   site-variance conditions where few sites most threaten
-   the adequacy of any df approximation.
+5. **Other small-sample corrections.** We use Satterthwaite
+   df for the mixed models, with a $K - 1$ sensitivity
+   analysis. Kenward-Roger df [@kenward1997small] and methods
+   designed for very few clusters [@mcneish2016modeling] were
+   not evaluated. The $K = 10$ random-slopes scenarios deserve
+   particular attention. There the slope variance is estimated
+   from only ten sites.
 
-5. **Bayesian approaches.** Hierarchical Bayesian models
-   offer partial pooling of site-specific treatment
-   effects, which may outperform frequentist random
-   effects models when the number of sites is very small
-   [@jones1998comparison].
+6. **Bayesian approaches.** Hierarchical Bayesian models
+   offer partial pooling of site-specific treatment effects.
+   They may outperform frequentist random effects models when
+   the number of sites is very small [@jones1998comparison].
 
-6. **Sample size planning.** Tools that incorporate the
-   design effect from multicenter structure, including
-   anticipated ICC and site size imbalance, into
-   prospective sample size calculations would improve
+7. **Sample size planning.** Prospective sample size
+   calculations could incorporate the design effect from
+   multicenter structure. This includes the anticipated ICC
+   and site size imbalance. Tools that do so would improve
    trial planning [@vierron2009design;
    @sverdlovSelectingRandomizationMethod2024].
 
 # Data and code availability
 
-All data reported here are synthetic, generated by
+All data reported here are synthetic. They are generated by
 `analysis/scripts/sim_multicenter.R`. No external or
 human-participant data are used. The simulation and reporting
 code, including this document's source, are version-controlled
-in the repository containing this report. The simulation is
-fully reproducible from the fixed seed and RNG kind documented
-in Methods ("Simulation procedure"). The exact scenario grid
-used to produce every table and figure in this report is
-defined in the `sim-run` code chunk of `report.Rmd`. We note
-that a fixed seed and RNG kind alone do not guarantee identical
-numeric results across package versions, since `lme4`'s
-optimizer and convergence-warning behavior, directly relevant
-to the singular/boundary-fit diagnostics reported here, can
-change between releases. The exact computational environment,
-including the R and `lme4` versions used to produce this
-report, is pinned in `renv.lock` at the repository root.
-Running `renv::restore()` from the repository root recreates
-that environment exactly.
+in the repository that contains this report. The simulated data
+are reproducible from the fixed seed and RNG kind documented in
+Methods ("Simulation procedure"). The function
+`build_scenarios()` in the same script defines the exact
+scenario grid. We note that a fixed seed and RNG kind alone do
+not guarantee identical numeric results across package
+versions. The optimizers of `lme4` and `lmerTest` can change
+between releases. That behavior bears
+directly on the singular-fit diagnostics reported here. The R
+package versions are recorded in `renv.lock` at the repository
+root. The repository also provides a `Dockerfile` that fixes the
+operating system and R build. Neither file controls the BLAS
+library or the compiler fully. As a result, small numeric
+differences across machines remain possible. The ADEMP
+self-audit and its change log are kept in the repository, in
+`docs/morris-audit-2026-04-17.md`.
 
 # Conflict of interest
 
@@ -1250,76 +1357,3 @@ The author declares no conflict of interest. No external funding
 supported this work.
 
 # References
-
-## Morris et al. (2019) ADEMP Compliance
-
-We audited this simulation study against the reporting
-standards proposed by Morris, White, and Crowther
-[-@morris2019using]. The original audit is recorded at
-`docs/morris-audit-2026-04-17.md`. A status update following
-the 2026-08 revision described below is appended to that file.
-
-**Verdict:** Partially compliant (updated).
-
-**Resolved since the original 2026-04-17 audit:**
-
-- Monte Carlo SEs are now computed for every performance estimate in
-  `summarize_simulation()` (`mcse_bias`, `mcse_empirical_se`,
-  `mcse_mse`, `mcse_model_se`, `mcse_power`, `mcse_coverage`,
-  `mcse_convergence`, `mcse_singular_rate`) and are displayed
-  alongside the corresponding point estimates for power and coverage
-  in Table 1 and Table 2.
-- `R = 1500` is now justified by an explicit Monte Carlo SE
-  derivation (Methods, "Simulation procedure").
-- Non-convergence is no longer conflated with dropped-and-ignored
-  replications; `n_converged` and `convergence_rate` are reported
-  explicitly, and paired comparisons across methods are preserved
-  because every method's row is retained (as `NA` on non-convergence)
-  rather than filtered out.
-- `RNGkind("L'Ecuyer-CMRG")` is pinned immediately before the single
-  `set.seed()` call.
-- Per-replicate `.Random.seed` values are captured by
-  `run_simulation()`, attached as the `rng_states` attribute of its
-  return value, and persisted to
-  `analysis/data/derived_data/rng_states.rds` (keyed by scenario label
-  and replicate index), so a specific failing or singular replication
-  from a completed run can be re-run in isolation via
-  `with_rng_state()`-style `.Random.seed` restoration without
-  re-executing the whole simulation up to that point.
-- A random-slopes method (Method 4 in "Analytic methods") is now
-  implemented in `sim_multicenter.R::fit_methods()`, fit on every
-  replicate, and reported in a dedicated Results subsection
-  ("Random slopes under treatment-by-site interaction") and Table 3
-  for the six treatment-by-site-interaction scenarios, with the
-  coverage gain and singular-fit rate reported in the abstract.
-
-**Gaps identified in the 2026-08 revision, not present in the
-original audit:**
-
-- Singular/boundary `lmer` fits were, prior to this revision, silently
-  absorbed into "converged" by the warning-suppression logic in
-  `fit_methods()`; this has been fixed by recording `singular` and
-  `conv_warning` as explicit outcomes, but the fix is new as of this
-  revision and has not yet been audited against Morris §5.1 on a
-  wider scenario set than the one simulated here.
-- Coverage previously used a fixed $z = 1.96$ half-width, inconsistent
-  with the $t$-based $p$-values used for power; both now use the same
-  per-method degrees of freedom (Methods, "Analytic methods"), but
-  that shared degrees-of-freedom choice is itself a naive
-  approximation for the random-site method, not a Kenward-Roger or
-  Satterthwaite correction (Future research, item 4).
-- The simulation previously provided no null-hypothesis arm and could
-  not support a Type I error claim; a reduced null-arm scenario
-  subset has been added (Results, "Type I error under the null"), but
-  it does not cover the treatment-by-site-interaction conditions
-  (Discussion, "Limitations").
-
-**Still open:**
-
-- The random-slopes method (Method 4) is reported only for the six
-  treatment-by-site-interaction scenarios under the true alternative;
-  the null-hypothesis arm does not yet cover the random-slopes
-  method, and the $K$/$\sigma^2_\alpha$/balance factorial grid used
-  for the random-intercept comparison has not been extended to the
-  random-slopes method (Future research, item 1; Discussion,
-  "Limitations").

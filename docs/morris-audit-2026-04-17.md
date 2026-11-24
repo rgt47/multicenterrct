@@ -110,5 +110,108 @@ See `docs/pub_review_whitepaper_2026-08-13.md` for the full review and
 updated after re-rendering, for confirmation that the fixes were verified
 against a fresh simulation run.
 
+## Update: 2026-11-17
+
+The ADEMP compliance section below was removed from
+`analysis/report/report.Rmd` in response to the 2026-11-17 referee
+report (`analysis/report/referee-report-2026-11-17.md`, Major 10),
+which judged it lab-notebook content rather than manuscript content.
+It is preserved here verbatim as it stood in the manuscript, followed
+by a status note for the 2026-11-17 remediation.
+
+### Section as removed from report.Rmd
+
+### Morris et al. (2019) ADEMP Compliance
+
+We audited this simulation study against the reporting
+standards proposed by Morris, White, and Crowther
+[-@morris2019using]. The original audit is recorded at
+`docs/morris-audit-2026-04-17.md`. A status update following
+the 2026-08 revision described below is appended to that file.
+
+**Verdict:** Partially compliant (updated).
+
+**Resolved since the original 2026-04-17 audit:**
+
+- Monte Carlo SEs are now computed for every performance estimate in
+  `summarize_simulation()` (`mcse_bias`, `mcse_empirical_se`,
+  `mcse_mse`, `mcse_model_se`, `mcse_power`, `mcse_coverage`,
+  `mcse_convergence`, `mcse_singular_rate`) and are displayed
+  alongside the corresponding point estimates for power and coverage
+  in Table 1 and Table 2.
+- `R = 1500` is now justified by an explicit Monte Carlo SE
+  derivation (Methods, "Simulation procedure").
+- Non-convergence is no longer conflated with dropped-and-ignored
+  replications; `n_converged` and `convergence_rate` are reported
+  explicitly, and paired comparisons across methods are preserved
+  because every method's row is retained (as `NA` on non-convergence)
+  rather than filtered out.
+- `RNGkind("L'Ecuyer-CMRG")` is pinned immediately before the single
+  `set.seed()` call.
+- Per-replicate `.Random.seed` values are captured by
+  `run_simulation()`, attached as the `rng_states` attribute of its
+  return value, and persisted to
+  `analysis/data/derived_data/rng_states.rds` (keyed by scenario label
+  and replicate index), so a specific failing or singular replication
+  from a completed run can be re-run in isolation via
+  `with_rng_state()`-style `.Random.seed` restoration without
+  re-executing the whole simulation up to that point.
+- A random-slopes method (Method 4 in "Analytic methods") is now
+  implemented in `sim_multicenter.R::fit_methods()`, fit on every
+  replicate, and reported in a dedicated Results subsection
+  ("Random slopes under treatment-by-site interaction") and Table 3
+  for the six treatment-by-site-interaction scenarios, with the
+  coverage gain and singular-fit rate reported in the abstract.
+
+**Gaps identified in the 2026-08 revision, not present in the
+original audit:**
+
+- Singular/boundary `lmer` fits were, prior to this revision, silently
+  absorbed into "converged" by the warning-suppression logic in
+  `fit_methods()`; this has been fixed by recording `singular` and
+  `conv_warning` as explicit outcomes, but the fix is new as of this
+  revision and has not yet been audited against Morris §5.1 on a
+  wider scenario set than the one simulated here.
+- Coverage previously used a fixed $z = 1.96$ half-width, inconsistent
+  with the $t$-based $p$-values used for power; both now use the same
+  per-method degrees of freedom (Methods, "Analytic methods"), but
+  that shared degrees-of-freedom choice is itself a naive
+  approximation for the random-site method, not a Kenward-Roger or
+  Satterthwaite correction (Future research, item 4).
+- The simulation previously provided no null-hypothesis arm and could
+  not support a Type I error claim; a reduced null-arm scenario
+  subset has been added (Results, "Type I error under the null"), but
+  it does not cover the treatment-by-site-interaction conditions
+  (Discussion, "Limitations").
+
+**Still open:**
+
+- The random-slopes method (Method 4) is reported only for the six
+  treatment-by-site-interaction scenarios under the true alternative;
+  the null-hypothesis arm does not yet cover the random-slopes
+  method, and the $K$/$\sigma^2_\alpha$/balance factorial grid used
+  for the random-intercept comparison has not been extended to the
+  random-slopes method (Future research, item 1; Discussion,
+  "Limitations").
+
+### Status after the 2026-11-17 remediation
+
+- The two mixed models now use Satterthwaite denominator df
+  (`lmerTest`), with a K - 1 df sensitivity analysis, replacing the
+  naive N-minus-p df. The naive df is kept only as a fallback when
+  the Satterthwaite computation fails (`df_fallback`).
+- The null-hypothesis arm now includes the six treatment-by-site
+  interaction cells, so Type I error of the random-slopes method is
+  assessed. These rows are appended at the end of the scenario grid,
+  so the RNG stream of the original 24 scenarios is unchanged.
+- Each replicate records the conditional target of the fixed-site
+  estimator (`cond_target`), and `summarize_simulation()` reports
+  `bias_cond` and `coverage_cond` against it.
+- Still open: the K / sigma_alpha^2 / balance grid has not been
+  extended to small centers, many sites, or low ICC, and the
+  random-slopes comparison has not been extended to the full grid.
+- The manuscript has not been re-rendered since these changes; see
+  `analysis/report/referee-remediation-log-2026-11-17.md`.
+
 ---
 *Source: ~/prj/res/07-multicenter-rct/multicenterrct/docs/morris-audit-2026-04-17.md*
